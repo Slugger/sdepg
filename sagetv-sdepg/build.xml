@@ -1,0 +1,220 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<!--  Copyright 2012 Battams, Derek 												-->
+<!-- 																				-->       
+<!--   Licensed under the Apache License, Version 2.0 (the "License");				-->
+<!--   you may not use this file except in compliance with the License.				-->
+<!--   You may obtain a copy of the License at										-->
+<!-- 																				-->
+<!--     http://www.apache.org/licenses/LICENSE-2.0									-->
+<!-- 																				-->
+<!--   Unless required by applicable law or agreed to in writing, software			-->
+<!--   distributed under the License is distributed on an "AS IS" BASIS,			-->
+<!--   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.		-->
+<!--   See the License for the specific language governing permissions and			-->
+<!--   limitations under the License.												-->
+<project name="sdepg" default="build" basedir=".">
+  <property name="sage.jar" value="C:/Program Files/SageTV/SageTV/Sage.jar" />
+  <property name="sage.libs" value="X:/" />
+  <property name="src.token" value="@@" />
+  <property name="app.res.dir" value="plugins/sdepg" />
+  <property name="src" value="src" />
+  <property name="gh.secret.file" value="${user.home}/.gh.secret" />
+	
+  <path id="project.class.path">
+  	<pathelement location="${sage.jar}" />
+  	<fileset dir="${sage.libs}" includes="*.jar"/>
+  </path>
+
+  <target name="genver" description="Generate version info">
+  	<tstamp>
+  		<format property="app.bld.date" pattern="yyyy.MM.dd" />
+  	</tstamp>
+    <taskdef name="groovy" classname="org.codehaus.groovy.ant.Groovy" classpathref="project.class.path" />
+    <groovy><![CDATA[
+    	def cmdName = 'git'
+    	if(System.getProperty('os.name').toUpperCase().contains('WINDOWS'))
+    		cmdName += '.cmd'
+        def cmd = "$cmdName --no-pager describe"
+        def p = cmd.execute()
+        def stdout = new StringBuilder()
+        def stderr = new StringBuilder()
+        p.consumeProcessOutput(stdout, stderr)
+        if(!p.waitFor()) {
+            def foundTag = false
+            stdout.toString().readLines().each {
+                it = it.trim()
+                if(it && it =~ /^\d+\.\d+\.\d+\.\d+/) {
+                    def index = it.lastIndexOf('.')
+                    def ver = it.substring(0, index)
+                    def rev = it.substring(index + 1)
+    				index = rev.indexOf('-')
+    				def sageRev = index >= 0 ? rev.substring(0, index + 2).replaceAll('-', '.') : rev
+					def logRoot = rev != sageRev ? "${ver}.${rev.substring(0, rev.indexOf('-')).toInteger()}" : "${ver}.${rev.toInteger() - 1}"
+    				def logTail = rev != sageRev ? 'HEAD' : "${ver}.$rev"
+                    println "Setting app.ver to: $ver"
+                    println "Setting revision.num to: $rev"
+    				println "Setting revision.num.sagetv to: $sageRev"
+    				println "Setting changelog.root to: $logRoot"
+    				println "Setting changelog.tail to: $logTail"
+                    properties['app.ver'] = ver
+                    properties['revision.num'] = rev
+    				properties['revision.num.sagetv'] = sageRev
+    				properties['changelog.root'] = logRoot
+    				properties['changelog.tail'] = logTail
+    				cmd = [cmdName, 'log', '--no-merges', "--pretty=format:* %s%n ", "${logRoot}..$logTail"]
+				println cmd
+    				stdout = new StringBuilder()
+    				p = cmd.execute()
+    				p.consumeProcessOutput(stdout, System.err)
+    				p.waitFor()
+    				properties['changelog.data'] = stdout.toString()
+                    foundTag = true
+                } else
+                    throw new RuntimeException("Invalid tag received! [$it]")
+            }
+            if(!foundTag)
+                throw new RuntimeException("Did not receive a tag from git!")
+        } else
+            throw new RuntimeException("Git failed!\n$stderr")
+    ]]></groovy>
+  </target>
+  	
+  <target name="tag" depends="genver" description="Tag a new release in Git repo">
+    <groovy><![CDATA[
+    	def cmdName = 'git'
+    	if(System.getProperty('os.name').toUpperCase().contains('WINDOWS'))
+    		cmdName += '.cmd'
+    	
+    	// Always start by updating the index
+    	def cmd = "$cmdName update-index -q --ignore-submodules --refresh"
+    	if(cmd.execute().waitFor())
+    		throw new RuntimeException('Git update-index failed!')
+    	
+    	// Do NOT tag if there are unstaged or uncommitted changes to the working copy
+    	cmd = "$cmdName diff-files --quiet --ignore-submodules --"
+    	if(cmd.execute().waitFor()) {
+    		println 'ERROR: Cannot tag because of unstaged changes in working copy!'
+    		cmd = "$cmdName diff-files --name-status -r --ignore-submodules --"
+    		def p = cmd.execute()
+    		p.consumeProcessOutput(System.out, System.err)
+    		p.waitFor()
+    		throw new IllegalStateException('Unstaged changes detected!')
+    	} else
+    		println 'OK: No unstaged changes detected in working copy.'
+
+    	cmd = "$cmdName diff-index --cached --quiet HEAD --ignore-submodules --"
+    	if(cmd.execute().waitFor()) {
+    		println 'ERROR: Cannot tag because of uncommited changes to working copy index!'
+    		cmd = "$cmdName diff-index --cached --name-status -r --ignore-submodules HEAD --"
+    		def p = cmd.execute()
+    		p.consumeProcessOutput(System.out, System.err)
+    		p.waitFor()
+    		throw new IllegalStateException('Uncommitted changes detected!')
+    	} else
+    		println 'OK: No uncommitted changes detected in the index.'
+    	
+    	def rev = properties['revision.num']
+    	def sageRev = properties['revision.num.sagetv']
+    	if(rev.contains('-')) { // We have something to tag
+    		def cur = rev.split('\\.')[-1]
+    		cur = cur.substring(0, cur.indexOf('-')).toInteger()
+    		def newTag = "${properties['app.ver']}.${cur + 1}"
+    		println "New Tag: $newTag"
+	        cmd = [cmdName, 'tag', '-a', '-m', "Tagging release $newTag", newTag]
+			def p = cmd.execute()
+    		p.consumeProcessOutput(System.out, System.err)
+    		if(p.waitFor())
+    			throw new RuntimeException('git tag FAILED!')
+    	} else
+    		println 'Nothing new to be tagged, skipping!'
+    ]]></groovy>	
+  </target>
+  	
+  <target name="rmgensrc" description="Delete generated src files">
+  	<delete file="sagetv.plugin.xml" failonerror="false" />
+  </target>
+	
+  <target name="gensrc" depends="genver,rmgensrc" description="Create generated src files">
+  	<copy todir="." overwrite="true" verbose="true">
+  	  <fileset dir=".">
+  	    <include name="**/*.in"/>
+  	  </fileset>
+  	  <mapper type="glob" from="*.in" to="*"/>
+  	  <filterset begintoken="${src.token}" endtoken="${src.token}">
+  	    <filter token="VER_NUM" value="${app.ver}"/>
+  	    <filter token="SAGE_BLD_NUM" value="${revision.num.sagetv}"/>
+  	    <filter token="BLD_NUM" value="${revision.num}"/>
+  	  	<filter token="MOD_DATE" value="${app.bld.date}"/>
+  	  	<filter token="CHANGELOG" value="${changelog.data}"/>
+  	  </filterset>
+    </copy> 
+  </target>
+	
+  <target name="javac" depends="gensrc" description="Compile java source">
+    <mkdir dir="bld"/>
+  	<taskdef name="groovyc" classname="org.codehaus.groovy.ant.Groovyc" classpathref="project.class.path" />
+    <groovyc srcdir="src" destdir="bld">
+      <classpath refid="project.class.path"/>
+    </groovyc>
+  </target>
+
+  <target name="build" depends="javac" description="Build this project" />
+
+  <target name="plugin" depends="build" description="Build entire SageTV plugin package">
+  	<delete dir="plugin" failonerror="false" />
+  	<property name="base" value="plugin/${app.res.dir}" />
+  	<mkdir dir="${base}/airing_filters" />
+  	<mkdir dir="${base}/program_filters" />
+  	<mkdir dir="${base}/airing_generators" />
+  	<mkdir dir="${base}/channel_generators" />
+  	<mkdir dir="${base}/program_generators" />
+  	<copy todir="${base}">
+  	  <fileset dir=".">
+  	  	<include name="*.log4j.properties" />
+  	  	<include name="tools/*.jar" />
+  	  </fileset>
+  	</copy>
+  	<jar destfile="sdepg.jar" basedir="bld" />
+  	<zip destfile="sdepg-jar-${app.ver}.${revision.num}.zip" basedir="." includes="sdepg.jar" />
+  	<checksum file="sdepg-jar-${app.ver}.${revision.num}.zip" property="bin.jar.md5" />
+  	<replace file="sagetv.plugin.xml" token="@@JAR_MD5@@" value="${bin.jar.md5}" />
+  	<zip destfile="sdepg-conf-${app.ver}.${revision.num}.zip" basedir="plugin" />
+  	<checksum file="sdepg-conf-${app.ver}.${revision.num}.zip" property="bin.conf.md5" />
+  	<replace file="sagetv.plugin.xml" token="@@CONF_MD5@@" value="${bin.conf.md5}" />
+  </target>
+
+  <target name="deliver" depends="plugin" description="Upload build to Github">
+  	<groovy><![CDATA[
+  		if(!(properties['revision.num'] ==~ /^\d+$/))
+  			throw new RuntimeException("Cannot upload a non-tagged build! [${String.format('%s.%s', properties['app.ver'], properties['revision.num'])}]")
+  	]]></groovy>
+	<java jar="tools/ghdlmgr.jar" fork="true" failonerror="true">
+		<arg value="-a" />
+		<arg value="upload" />
+		<arg value="-o" />
+		<arg value="Slugger" />
+		<arg value="-r" />
+		<arg value="sagetv-sdepg" />
+		<arg value="-s" />
+		<arg value="@${gh.secret.file}" />
+		<arg value="--" />
+		<arg value="-f" />
+		<arg value="sdepg-jar-${app.ver}.${revision.num}.zip" />
+		<arg value="-f" />
+		<arg value="sdepg-conf-${app.ver}.${revision.num}.zip" />
+	</java>
+  </target>
+
+  <target name="submit" depends="deliver" description="Submit plugin to SageTV repository">
+	<taskdef classname="com.google.code.sagetvaddons.dev.ant.task.SageTvPluginSubmitter" name="sagesubmit" />
+  	<sagesubmit name="Derek Battams" user="Slugger" email="derek@battams.ca" pluginid="sdepg" reqtype="UPGRADE" descriptor="sagetv.plugin.xml" />
+  </target>
+
+  <target name="clean" depends="rmgensrc" description="Cleans this project">
+  	<delete dir="plugin" failonerror="false" />
+  	<delete dir="bld" failonerror="false" />
+  	<delete>
+  	  <fileset dir="." includes="sdepg-*.zip,sdepg.jar" />
+    </delete>
+  </target>
+</project>

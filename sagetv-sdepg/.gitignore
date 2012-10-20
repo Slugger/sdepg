@@ -1,0 +1,10 @@
+/plugins
+/logs
+
+bin
+/plugin
+/bld
+sdepg-*.zip
+sdepg.jar
+/sagetv.plugin.xml
+!tools/*

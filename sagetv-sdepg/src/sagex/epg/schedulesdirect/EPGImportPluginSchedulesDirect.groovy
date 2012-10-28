@@ -56,7 +56,6 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 	private Map processedPrograms
 	private def uniqueShows
 	private def skippedShows
-	private def ignoredShows
 	private ProgramFilter programFilter
 	private AiringFilter airingFilter
 	private ProgramGenerator programGenerator
@@ -93,10 +92,10 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 	public String[][] getProviders(String zipCode) {
 		def sdId = Configuration.GetServerProperty(Plugin.PROP_SD_USER, '')
 		def sdPwd = Configuration.GetServerProperty(Plugin.PROP_SD_PWD, '')
-		licResp = License.isLicensed(Plugin.PLUGIN_ID)
-		def clnt = new NetworkEpgClient(sdId, sdPwd)
+		licResp = License.isLicensed(Plugin.PLUGIN_ID)		
 		def providers = []
 		try {
+			def clnt = new NetworkEpgClient(sdId, sdPwd)
 			clnt.getHeadends(zipCode).each {
 				def hash = HeadendMap.addId(it.id)
 				providers.add([hash.toString(), "$it.name $it.location"])
@@ -134,13 +133,12 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 		programGeneratorsEnabled = Boolean.parseBoolean(Configuration.GetServerProperty(Plugin.PROP_SHOW_GENERATORS, 'true'))
 		uniqueShows = 0
 		skippedShows = 0
-		ignoredShows = 0
 		processedPrograms.clear()
 		this.db = db ? new EPGDBPublicAdvancedImpl((sage.z)db) : null
 		airingFilter.resetLogger()
 		programFilter.resetLogger()
 		doUpdate(providerId)
-		LOG.debug "Processed ${uniqueShows + skippedShows + ignoredShows} show(s); UNIQUE: ${uniqueShows}; SKIPPED: ${skippedShows}; IGNORED: ${ignoredShows}"
+		LOG.debug "Processed ${uniqueShows + skippedShows} show(s); UNIQUE: ${uniqueShows}; SKIPPED: ${skippedShows}"
 		processProgramGenerators()
 		processAiringGenerators()
 		processedPrograms.clear()
@@ -252,12 +250,16 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 		LOG.info "Performed lineup map configuration in ${System.currentTimeMillis() - start}ms"
 		
 		start = System.currentTimeMillis()
-		def clnt = new ZipEpgClient(new File("${Plugin.RESOURCE_DIR}/data/${providerId}/epg.zip"))
-		clnt.getHeadendById(providerId).lineups[0].stations.findAll { 
-			def chan = ChannelAPI.GetChannelForStationID(it.id.toInteger())
-			return chan != null && ChannelAPI.IsChannelViewable(chan)
-		}.each { it.airings.each { addProgram(it.program); addAiring(it) } }
-		LOG.info "Performed EPG data load in ${System.currentTimeMillis() - start}ms"
+		try {
+			def clnt = new ZipEpgClient(new File("${Plugin.RESOURCE_DIR}/data/${providerId}/epg.zip"))
+			clnt.getHeadendById(providerId).lineups[0].stations.findAll {
+				def chan = ChannelAPI.GetChannelForStationID(it.id.toInteger())
+				return chan != null && ChannelAPI.IsChannelViewable(chan)
+			}.each { it.airings.each { addProgram(it.program); addAiring(it) } }
+			LOG.info "Performed EPG data load in ${System.currentTimeMillis() - start}ms"
+		} catch(Exception e) {
+			LOG.error 'Error processing EPG zip data!', e
+		}
 		return true // Log the error, tell the core we're good for 24 hours; user will eventually investigate when their EPG data goes missing
 	}
 	
@@ -328,8 +330,13 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 	
 	private boolean setLineupMap(String lineupId) {
 		def root = new File("${Plugin.RESOURCE_DIR}/data/$lineupId")
-		def clnt = new ZipEpgClient(new File(root, 'epg.zip'))
-		def map = clnt.getHeadendById(lineupId).lineups[0].stationMap
+		def map = [:]
+		try {
+			def clnt = new ZipEpgClient(new File(root, 'epg.zip'))
+			map = clnt.getHeadendById(lineupId).lineups[0].stationMap
+		} catch(Exception e) {
+			LOG.error 'sd4j error!', e
+		}
 		if(map.keySet().size() == 0) {
 			LOG.error 'Cannot process an empty lineup map!'
 			return false
@@ -351,25 +358,29 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 
 	private boolean addChannels(def lineupId) {
 		def rc = true
-		def clnt = new ZipEpgClient(new File("${Plugin.RESOURCE_DIR}/data/${lineupId}/epg.zip"))
 		def chans = []
-		clnt.getHeadendById(lineupId).lineups.each {
-			it.stations.each {
-				def chanId = it.id
-				def callsign = it.callsign
-				def longName = it.name
-				def network = it.affiliate
-				if(db && !db.addChannelPublic(callsign, longName, network, chanId.toInteger())) {
-					rc = false
-					LOG.error "Failed to add channel to Sage DB! [$callsign :: $chanId]"
-				} else {
-					chans.add(new Channel(callsign: callsign, longName: longName, network: network, stationId: chanId.toInteger()))
-					if(LOG.isTraceEnabled())
-						LOG.trace "Channel created: $chanId :: $callsign ($longName)"
+		try {
+			def clnt = new ZipEpgClient(new File("${Plugin.RESOURCE_DIR}/data/${lineupId}/epg.zip"))
+			clnt.getHeadendById(lineupId).lineups.each {
+				it.stations.each {
+					def chanId = it.id
+					def callsign = it.callsign
+					def longName = it.name
+					def network = it.affiliate
+					if(db && !db.addChannelPublic(callsign, longName, network, chanId.toInteger())) {
+						rc = false
+						LOG.error "Failed to add channel to Sage DB! [$callsign :: $chanId]"
+					} else {
+						chans.add(new Channel(callsign: callsign, longName: longName, network: network, stationId: chanId.toInteger()))
+						if(LOG.isTraceEnabled())
+							LOG.trace "Channel created: $chanId :: $callsign ($longName)"
+					}
 				}
 			}
+		} catch(Exception e) {
+			LOG.error 'sd4j error', e
+			rc = false
 		}
-		
 		if(chanGeneratorsEnabled) {
 			if(licResp.isLicensed()) {
 				chanGenerator.generate(chans).each {

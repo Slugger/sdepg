@@ -304,7 +304,7 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 			i |= IEPGDBPublicAdvanced.STEREO_MASK
 		if(air.hdtv)
 			i |= IEPGDBPublicAdvanced.HDTV_MASK
-		if(air.premiereStatus != Airing.PremiereStatus.NONE) {
+		if(air.premiereStatus != null && air.premiereStatus != Airing.PremiereStatus.NONE) {
 			switch(air.premiereStatus) {
 				case Airing.PremiereStatus.SERIES_PREMIERE: i |= IEPGDBPublicAdvanced.SERIES_PREMIERE_MASK; break
 				case Airing.PremiereStatus.SEASON_PREMIERE: i |= IEPGDBPublicAdvanced.SEASON_PREMIERE_MASK; break

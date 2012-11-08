@@ -19,32 +19,35 @@ import org.apache.commons.io.FileUtils
 import org.apache.log4j.Logger
 
 import sagex.api.Configuration
+import sagex.epg.schedulesdirect.EPGImportPluginSchedulesDirect
 import sagex.epg.schedulesdirect.plugin.Plugin
 
 class EpgDownloader {
 	static private final Logger LOG = Logger.getLogger(EpgDownloader)
+	static boolean isLocalDataValid() {
+		def src = EPGImportPluginSchedulesDirect.EPG_SRC
+		return src.canRead() && FileUtils.isFileNewer(src, new Date().time - (3600000L * Configuration.GetServerProperty(Plugin.PROP_EPG_TTL, '23').toLong()))
+	}
 	
 	private def id
 	private def pwd
-	private def headend
 	
-	EpgDownloader(def headend, def id, def pwd) {
+	EpgDownloader(def id, def pwd) {
 		this.id = id
 		this.pwd = pwd
-		this.headend = headend
 	}
 	
 	void download() throws IOException {
-		def targetDir = new File("${Plugin.RESOURCE_DIR}/data/$headend")
+		def targetDir = EPGImportPluginSchedulesDirect.EPG_SRC.parentFile
 		if(!targetDir.exists())
 			targetDir.mkdirs()
-		def targetFile = new File(targetDir, 'epg.zip')
-		if(targetFile.exists() && FileUtils.isFileNewer(targetFile, new Date().time - (3600000L * Configuration.GetServerProperty(Plugin.PROP_EPG_TTL, '23').toLong()))) {
-			LOG.info "Using headend data for '$headend' from local cache!"
+		if(isLocalDataValid()) {
+			LOG.info 'Using EPG data from local cache!'
 			return
 		}
+		def targetFile = EPGImportPluginSchedulesDirect.EPG_SRC
 		def cmd = [new File("${System.getProperty('java.home')}/bin/java").absolutePath, '-jar', new File("${Plugin.RESOURCE_DIR}/tools/sd4j.jar").absolutePath]
-		cmd << '-u' << id << '-p' << pwd << '-e' << headend << '-o' << targetDir.absolutePath << '-f' << targetFile.name
+		cmd << '-u' << id << '-p' << pwd << '-o' << targetFile.absolutePath
 		LOG.info cmd
 		def p = cmd.execute()
 		def stdout = new StringBuilder()

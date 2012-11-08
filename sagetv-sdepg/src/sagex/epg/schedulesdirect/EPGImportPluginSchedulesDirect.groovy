@@ -51,6 +51,7 @@ import com.google.code.sagetvaddons.license.LicenseResponse
 class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 	static { Class.forName('sagex.epg.schedulesdirect.plugin.Plugin') } // Init the logger only once
 	static private final Logger LOG = Logger.getLogger(EPGImportPluginSchedulesDirect)
+	static final File EPG_SRC = new File(Plugin.RESOURCE_DIR, 'epg.zip')
 
 	private IEPGDBPublicAdvanced db
 	private Map processedPrograms
@@ -95,8 +96,16 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 		licResp = License.isLicensed(Plugin.PLUGIN_ID)		
 		def providers = []
 		try {
-			def clnt = new NetworkEpgClient(sdId, sdPwd)
-			clnt.getHeadends(zipCode).each {
+			def clnt
+			if(EpgDownloader.isLocalDataValid())
+				clnt = new ZipEpgClient(EPG_SRC)
+			else
+				clnt = new NetworkEpgClient(sdId, sdPwd)
+			/*
+			 *  NOTE: Ignore the zipCode arg; sd4j will just pull headends configured in
+			 *  the user's SD account, which is exactly what is needed.
+			 */
+			clnt.getHeadends().each {
 				def hash = HeadendMap.addId(it.id)
 				providers.add([hash.toString(), "$it.name $it.location"])
 			}
@@ -233,7 +242,7 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 		def sdId = Configuration.GetServerProperty(Plugin.PROP_SD_USER, '')
 		def sdPwd = Configuration.GetServerProperty(Plugin.PROP_SD_PWD, '')
 		try {
-			new EpgDownloader(providerId, sdId, sdPwd).download()
+			new EpgDownloader(sdId, sdPwd).download()
 		} catch(IOException e) {
 			LOG.error 'Download of EPG data failed!', e
 			Global.DebugLog('EPG update failed: Download of data from sd4j failed!  See plugin logs for details.')
@@ -251,7 +260,7 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 		
 		start = System.currentTimeMillis()
 		try {
-			def clnt = new ZipEpgClient(new File("${Plugin.RESOURCE_DIR}/data/${providerId}/epg.zip"))
+			def clnt = new ZipEpgClient(EPG_SRC)
 			clnt.getHeadendById(providerId).lineups[0].stations.findAll {
 				def chan = ChannelAPI.GetChannelForStationID(it.id.toInteger())
 				return chan != null && ChannelAPI.IsChannelViewable(chan)
@@ -329,10 +338,14 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 	}
 	
 	private boolean setLineupMap(String lineupId) {
-		def root = new File("${Plugin.RESOURCE_DIR}/data/$lineupId")
+		def root = new File("${Plugin.RESOURCE_DIR}/lineup_editors/$lineupId")
+		if(!root.exists() && !root.mkdirs()) {
+			LOG.error "Unable to create lineup editor directory! [$root.absolutePath]"
+			return true
+		}
 		def map = [:]
 		try {
-			def clnt = new ZipEpgClient(new File(root, 'epg.zip'))
+			def clnt = new ZipEpgClient(EPG_SRC)
 			map = clnt.getHeadendById(lineupId).lineups[0].stationMap
 		} catch(Exception e) {
 			LOG.error 'sd4j error!', e
@@ -360,7 +373,7 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 		def rc = true
 		def chans = []
 		try {
-			def clnt = new ZipEpgClient(new File("${Plugin.RESOURCE_DIR}/data/${lineupId}/epg.zip"))
+			def clnt = new ZipEpgClient(EPG_SRC)
 			clnt.getHeadendById(lineupId).lineups.each {
 				it.stations.each {
 					def chanId = it.id

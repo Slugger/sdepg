@@ -100,7 +100,8 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 			if(EpgDownloader.isLocalDataValid())
 				clnt = new ZipEpgClient(EPG_SRC)
 			else
-				clnt = new NetworkEpgClient(sdId, sdPwd)
+				clnt = new NetworkEpgClient(sdId, sdPwd, EpgDownloader.generateUserAgent())
+				
 			/*
 			 *  NOTE: Ignore the zipCode arg; sd4j will just pull headends configured in
 			 *  the user's SD account, which is exactly what is needed.

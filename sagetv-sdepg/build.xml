@@ -173,6 +173,7 @@
   	  <fileset dir=".">
   	  	<include name="*.log4j.properties" />
   	  	<include name="tools/*.jar" />
+  	  	<exclude name="tools/ghdlmgr.jar" />
   	  </fileset>
   	</copy>
   	<jar destfile="sdepg.jar" basedir="bld" />

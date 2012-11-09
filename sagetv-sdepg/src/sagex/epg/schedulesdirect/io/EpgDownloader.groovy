@@ -15,10 +15,10 @@
 */
 package sagex.epg.schedulesdirect.io
 
-import org.apache.commons.io.FileUtils
 import org.apache.log4j.Logger
+import org.schedulesdirect.api.ZipEpgClient
 
-import sagex.api.Configuration
+import sagex.api.PluginAPI
 import sagex.epg.schedulesdirect.EPGImportPluginSchedulesDirect
 import sagex.epg.schedulesdirect.plugin.Plugin
 
@@ -26,7 +26,12 @@ class EpgDownloader {
 	static private final Logger LOG = Logger.getLogger(EpgDownloader)
 	static boolean isLocalDataValid() {
 		def src = EPGImportPluginSchedulesDirect.EPG_SRC
-		return src.canRead() && FileUtils.isFileNewer(src, new Date().time - (3600000L * Configuration.GetServerProperty(Plugin.PROP_EPG_TTL, '23').toLong()))
+		return src.canRead() && !new ZipEpgClient(src).userStatus.isNewDataAvailable()
+	}
+	static String generateUserAgent() {
+		def plugin = PluginAPI.GetInstalledPlugins().find { PluginAPI.GetPluginIdentifier(it) == 'sdepg' }
+		def ver = plugin ? PluginAPI.GetPluginVersion(plugin) : 'unknown'
+		return "sagetv-sdepg/$ver (${System.getProperty('os.name')} ${System.getProperty('os.arch')} ${System.getProperty('os.version')})"
 	}
 	
 	private def id
@@ -47,7 +52,7 @@ class EpgDownloader {
 		}
 		def targetFile = EPGImportPluginSchedulesDirect.EPG_SRC
 		def cmd = [new File("${System.getProperty('java.home')}/bin/java").absolutePath, '-jar', new File("${Plugin.RESOURCE_DIR}/tools/sd4j.jar").absolutePath]
-		cmd << '-u' << id << '-p' << pwd << '-o' << targetFile.absolutePath
+		cmd << '-u' << id << '-p' << pwd << '-o' << targetFile.absolutePath << '-a' << generateUserAgent()
 		LOG.info cmd
 		def p = cmd.execute()
 		def stdout = new StringBuilder()

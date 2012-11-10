@@ -52,7 +52,7 @@ final class Plugin extends AbstractPlugin {
 	static final String PROP_SD_USER = "${PROP_PREFIX}/sdUser"
 	static final String PROP_SD_PWD = "${PROP_PREFIX}/sdPassword"
 	static final String PROP_LOG_LEVEL = "${PROP_PREFIX}/logLevel"
-	static final String PROP_EPG_TTL = "${PROP_PREFIX}/epgTTL"
+	static final String PROP_SD4J_THREADS = "${PROP_PREFIX}/sd4jThreads"
 	static { InternalLogger.init(Configuration.GetServerProperty(PROP_LOG_LEVEL, 'INFO')) }
 	static private final Logger LOG = Logger.getLogger(Plugin)
 	
@@ -103,9 +103,12 @@ final class Plugin extends AbstractPlugin {
 	@ButtonClickHandler('sdepg/refresh')
 	public void refreshEpgData() {
 		LOG.info 'EPG refresh forced by user!'
+		def src = EPGImportPluginSchedulesDirect.EPG_SRC
+		if(src.exists() && src.delete())
+			LOG.warn "Cached EPG data deleted! [$src]"
 		def epg = new EPGImportPluginSchedulesDirect()
 		epg.getProviders().each {
-			LOG.info "Refreshed lineup '$it[1]'"
+			LOG.info "Refreshed lineup '${it[1]}'"
 			forceRefresh(it[1])
 		}
 		Global.RemoveUnusedLineups()
@@ -142,7 +145,7 @@ final class Plugin extends AbstractPlugin {
 		airFilters.setPersistence(new ServerPropertyPersistence())
 		airFilters.setVisibility vis
 			
-		PluginProperty refresh = new PluginProperty(SageTVPlugin.CONFIG_BUTTON, PROP_REFRESH, 'Refresh EPG', 'Refresh EPG Data Now', 'Click this button to force a refresh of your EPG data now.')
+		PluginProperty refresh = new PluginProperty(SageTVPlugin.CONFIG_BUTTON, PROP_REFRESH, 'Refresh EPG', 'Refresh EPG Data Now', 'Click this button to force a refresh of your EPG data now.  This will delete currently cached EPG data.')
 		refresh.setPersistence(new NoPropertyPersistence())
 		refresh.setVisibility vis
 		
@@ -162,30 +165,30 @@ final class Plugin extends AbstractPlugin {
 		showGenerators.setPersistence(new ServerPropertyPersistence())
 		showGenerators.setVisibility vis
 		
-		PluginProperty sdUser = new PluginProperty(SageTVPlugin.CONFIG_TEXT, PROP_SD_USER, '', 'Schedules Direct User Name', 'Your Schedules Direct user name.  Only required if configuring SD lineups with mc2xml.')
+		PluginProperty sdUser = new PluginProperty(SageTVPlugin.CONFIG_TEXT, PROP_SD_USER, '', 'Schedules Direct User Name', 'Your Schedules Direct user name.')
 		sdUser.setPersistence(new ServerPropertyPersistence())
 		
-		PluginProperty sdPwd = new PluginProperty(SageTVPlugin.CONFIG_PASSWORD, PROP_SD_PWD, '', 'Schedules Direct Password', 'Your Schedules Direct password.  Only required if configuring SD lineups with mc2xml.')
+		PluginProperty sdPwd = new PluginProperty(SageTVPlugin.CONFIG_PASSWORD, PROP_SD_PWD, '', 'Schedules Direct Password', 'Your Schedules Direct password.')
 		sdPwd.setPersistence(new ServerPropertyPersistence())
 		
 		PluginProperty logLvl = new PluginProperty(SageTVPlugin.CONFIG_CHOICE, PROP_LOG_LEVEL, 'INFO', 'Log Level', 'Select the level of logging performed by the plugin.  Changes are immediate.', ['TRACE', 'DEBUG', 'INFO', 'WARN', 'ERROR', 'FATAL'] as String[])
 		logLvl.setPersistence(new ServerPropertyPersistence())
 		
-		PluginProperty epgTTL = new PluginProperty(SageTVPlugin.CONFIG_INTEGER, PROP_EPG_TTL, '23', 'EPG TTL', 'Number of hours to cache EPG data downloaded from Schedules Direct.')
-		epgTTL.setPersistence(new ServerPropertyPersistence())
-		epgTTL.setValidator(new IntRangeValidator(4, 23))
+		PluginProperty sd4jThreads = new PluginProperty(SageTVPlugin.CONFIG_INTEGER, PROP_SD4J_THREADS, '200', 'Worker Threads for SD4J Downloads', 'Maximum number of worker threads for downloading EPG data.  Only edit if you are told to or you know what you\'re doing.')
+		sd4jThreads.setPersistence(new ServerPropertyPersistence())
+		sd4jThreads.setValidator(new IntRangeValidator(1, 200))
 		
 		addProperty(refresh)
 		addProperty(sdUser)
 		addProperty(sdPwd)
 		addProperty(logLvl)
-		addProperty(epgTTL)
 		addProperty(showFilters)
 		addProperty(airFilters)
 		addProperty(showGenerators)
 		addProperty(airGenerators)
 		addProperty(chanGenerators)
 		addProperty(lineupEditors)
+		addProperty(sd4jThreads)
 	}
 	
 	@ConfigValueChangeHandler('sdepg/logLevel')

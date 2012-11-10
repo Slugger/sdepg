@@ -51,8 +51,9 @@ class EpgDownloader {
 			return
 		}
 		def targetFile = EPGImportPluginSchedulesDirect.EPG_SRC
+		def plugin = PluginAPI.GetInstalledPlugins().find { PluginAPI.GetPluginIdentifier(it) == 'sdepg' }
 		def cmd = [new File("${System.getProperty('java.home')}/bin/java").absolutePath, '-jar', new File("${Plugin.RESOURCE_DIR}/tools/sd4j.jar").absolutePath]
-		cmd << '-u' << id << '-p' << pwd << '-o' << targetFile.absolutePath << '-a' << generateUserAgent()
+		cmd << '-u' << id << '-p' << pwd << '-o' << targetFile.absolutePath << '-a' << generateUserAgent() << '-t' << PluginAPI.GetPluginConfigValue(plugin, Plugin.PROP_SD4J_THREADS)
 		LOG.info cmd
 		def p = cmd.execute()
 		def stdout = new StringBuilder()

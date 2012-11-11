@@ -95,8 +95,8 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 		def sdPwd = Configuration.GetServerProperty(Plugin.PROP_SD_PWD, '')
 		licResp = License.isLicensed(Plugin.PLUGIN_ID)		
 		def providers = []
+		def clnt = null
 		try {
-			def clnt
 			if(EpgDownloader.isLocalDataValid())
 				clnt = new ZipEpgClient(EPG_SRC)
 			else
@@ -113,6 +113,9 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 		} catch(Exception e) {
 			LOG.error('Error accessing Schedules Direct', e)
 			throw e
+		} finally {
+			if(clnt)
+				try { clnt.close() } catch(IOException e) {}
 		}
 		if(providers.size() > 1 && !licResp.isLicensed()) {
 			LOG.warn 'Unlicensed version of plugin detected; only one lineup will be returned!'
@@ -260,8 +263,9 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 		LOG.info "Performed lineup map configuration in ${System.currentTimeMillis() - start}ms"
 		
 		start = System.currentTimeMillis()
+		def clnt = null
 		try {
-			def clnt = new ZipEpgClient(EPG_SRC)
+			clnt = new ZipEpgClient(EPG_SRC)
 			clnt.getHeadendById(providerId).lineups[0].stations.findAll {
 				def chan = ChannelAPI.GetChannelForStationID(it.id.toInteger())
 				return chan != null && ChannelAPI.IsChannelViewable(chan)
@@ -269,6 +273,9 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 			LOG.info "Performed EPG data load in ${System.currentTimeMillis() - start}ms"
 		} catch(Exception e) {
 			LOG.error 'Error processing EPG zip data!', e
+		} finally {
+			if(clnt)
+				try { clnt.close() } catch(IOException e) {}
 		}
 		return true // Log the error, tell the core we're good for 24 hours; user will eventually investigate when their EPG data goes missing
 	}
@@ -345,11 +352,14 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 			return true
 		}
 		def map = [:]
+		def clnt = null
 		try {
-			def clnt = new ZipEpgClient(EPG_SRC)
+			clnt = new ZipEpgClient(EPG_SRC)
 			map = clnt.getHeadendById(lineupId).lineups[0].stationMap
 		} catch(Exception e) {
 			LOG.error 'sd4j error!', e
+		} finally {
+			if(clnt) try { clnt.close() } catch(IOException e) {}
 		}
 		if(map.keySet().size() == 0) {
 			LOG.error 'Cannot process an empty lineup map!'
@@ -373,8 +383,9 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 	private boolean addChannels(def lineupId) {
 		def rc = true
 		def chans = []
+		def clnt = null
 		try {
-			def clnt = new ZipEpgClient(EPG_SRC)
+			clnt = new ZipEpgClient(EPG_SRC)
 			clnt.getHeadendById(lineupId).lineups.each {
 				it.stations.each {
 					def chanId = it.id
@@ -394,6 +405,8 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 		} catch(Exception e) {
 			LOG.error 'sd4j error', e
 			rc = false
+		} finally {
+			if(clnt) try { clnt.close() } catch(IOException e) {}
 		}
 		if(chanGeneratorsEnabled) {
 			if(licResp.isLicensed()) {

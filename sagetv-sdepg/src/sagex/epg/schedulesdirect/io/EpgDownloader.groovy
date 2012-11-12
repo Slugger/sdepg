@@ -18,6 +18,7 @@ package sagex.epg.schedulesdirect.io
 import org.apache.log4j.Logger
 import org.schedulesdirect.api.ZipEpgClient
 
+import sagex.api.Global
 import sagex.api.PluginAPI
 import sagex.epg.schedulesdirect.EPGImportPluginSchedulesDirect
 import sagex.epg.schedulesdirect.plugin.Plugin
@@ -26,7 +27,11 @@ class EpgDownloader {
 	static private final Logger LOG = Logger.getLogger(EpgDownloader)
 	static boolean isLocalDataValid() {
 		def src = EPGImportPluginSchedulesDirect.EPG_SRC
-		return src.canRead() && !new ZipEpgClient(src).userStatus.isNewDataAvailable()
+		def nextUpdate = Global.GetTimeUntilNextEPGDownload()
+		if(nextUpdate <= 0)
+			nextUpdate = 86400000L
+		def last = System.currentTimeMillis() - (86400000L - nextUpdate)
+		return src.canRead() && !new ZipEpgClient(src).userStatus.isNewDataAvailable(new Date(last))
 	}
 	static String generateUserAgent() {
 		def plugin = PluginAPI.GetInstalledPlugins().find { PluginAPI.GetPluginIdentifier(it) == 'sdepg' }

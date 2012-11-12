@@ -16,6 +16,7 @@
 package sagex.epg.schedulesdirect.io
 
 import org.apache.log4j.Logger
+import org.schedulesdirect.api.NetworkEpgClient
 import org.schedulesdirect.api.ZipEpgClient
 
 import sagex.api.Global
@@ -25,14 +26,6 @@ import sagex.epg.schedulesdirect.plugin.Plugin
 
 class EpgDownloader {
 	static private final Logger LOG = Logger.getLogger(EpgDownloader)
-	static boolean isLocalDataValid() {
-		def src = EPGImportPluginSchedulesDirect.EPG_SRC
-		def nextUpdate = Global.GetTimeUntilNextEPGDownload()
-		if(nextUpdate <= 0)
-			nextUpdate = 86400000L
-		def last = System.currentTimeMillis() - (86400000L - nextUpdate)
-		return src.canRead() && !new ZipEpgClient(src).userStatus.isNewDataAvailable(new Date(last))
-	}
 	static String generateUserAgent() {
 		def plugin = PluginAPI.GetInstalledPlugins().find { PluginAPI.GetPluginIdentifier(it) == 'sdepg' }
 		def ver = plugin ? PluginAPI.GetPluginVersion(plugin) : 'unknown'
@@ -41,17 +34,35 @@ class EpgDownloader {
 	
 	private def id
 	private def pwd
+	private def newDataReady
 	
 	EpgDownloader(def id, def pwd) {
 		this.id = id
 		this.pwd = pwd
+		def src = EPGImportPluginSchedulesDirect.EPG_SRC
+		try {
+			if(!src.canRead())
+				newDataReady = true
+			else {
+				def clnt = new NetworkEpgClient(id, pwd)
+				def nextUpdate = Global.GetTimeUntilNextEPGDownload()
+				if(nextUpdate <= 0)
+					nextUpdate = 86400000L
+				def last = System.currentTimeMillis() - (86400000L - nextUpdate)
+				newDataReady = clnt.userStatus.isNewDataAvailable(new Date(last))
+				LOG.debug "Checking SD server, is new data available? $newDataReady"
+			}
+		} catch(Exception e) {
+			LOG.error('Error checking SD status', e)
+			newDataReady = !src.canRead()
+		}
 	}
 	
 	void download() throws IOException {
 		def targetDir = EPGImportPluginSchedulesDirect.EPG_SRC.parentFile
 		if(!targetDir.exists())
 			targetDir.mkdirs()
-		if(isLocalDataValid()) {
+		if(!newDataReady) {
 			LOG.info 'Using EPG data from local cache!'
 			return
 		}

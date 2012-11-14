@@ -16,21 +16,17 @@
 package sagex.epg.schedulesdirect
 
 import org.apache.log4j.Logger
-import org.apache.log4j.PropertyConfigurator
 import org.schedulesdirect.api.Airing
 import org.schedulesdirect.api.NetworkEpgClient
 import org.schedulesdirect.api.Program
-import org.schedulesdirect.api.Station
 import org.schedulesdirect.api.ZipEpgClient
+import org.schedulesdirect.grabber.Grabber
 
 import sage.EPGDBPublic
 import sage.EPGImportPlugin
-import sagex.SageAPI
 import sagex.api.ChannelAPI
 import sagex.api.Configuration
-import sagex.api.Database
 import sagex.api.Global
-import sagex.api.UserRecordAPI
 import sagex.epg.schedulesdirect.data.Channel
 import sagex.epg.schedulesdirect.data.HeadendMap
 import sagex.epg.schedulesdirect.data.SageProgram
@@ -72,6 +68,8 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 	private boolean airGeneratorsEnabled
 	private boolean chanGeneratorsEnabled
 	private boolean lineupEditorsEnabled
+	private String providerId
+	private String deviceName
 
 	public EPGImportPluginSchedulesDirect() {
 		db = null
@@ -106,9 +104,11 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 			 *  NOTE: Ignore the zipCode arg; sd4j will just pull headends configured in
 			 *  the user's SD account, which is exactly what is needed.
 			 */
-			clnt.getHeadends().each {
-				def hash = HeadendMap.addId(it.id)
-				providers.add([hash.toString(), "$it.name $it.location"])
+			clnt.getHeadends().each { he ->
+				he.lineups.each {
+					def hash = HeadendMap.addId("$he.id:$it.device")
+					providers.add([hash.toString(), "$he.name $he.location (${it.device != 'X' ? it.device : 'Digital'})"])
+				}
 			}
 		} catch(Exception e) {
 			LOG.error('Error accessing Schedules Direct', e)
@@ -134,6 +134,11 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 	@Override
 	public boolean updateGuide(String providerId, EPGDBPublic db) {
 		LOG.debug "updateGuide() called for '$providerId'"
+		this.providerId = HeadendMap.getId(providerId.toLong())
+		def devIndex = this.providerId.lastIndexOf(':')
+		this.deviceName = this.providerId.substring(devIndex + 1)
+		this.providerId = this.providerId.substring(0, devIndex)
+		LOG.debug "Mapped $providerId to ${this.providerId}; dev=$deviceName"
 		licResp = License.isLicensed(Plugin.PLUGIN_ID)
 		licWarnLogged = false
 		showFilterDisabledLogged = false
@@ -150,7 +155,7 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 		this.db = db ? new EPGDBPublicAdvancedImpl((sage.z)db) : null
 		airingFilter.resetLogger()
 		programFilter.resetLogger()
-		doUpdate(providerId)
+		doUpdate()
 		LOG.debug "Processed ${uniqueShows + skippedShows} show(s); UNIQUE: ${uniqueShows}; SKIPPED: ${skippedShows}"
 		processProgramGenerators()
 		processAiringGenerators()
@@ -236,11 +241,7 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 		return sProg
 	}
 
-	protected boolean doUpdate(def providerId) {
-		def origId = providerId
-		providerId = HeadendMap.getId(origId.toLong())
-		LOG.info "Mapped providerId from $origId to $providerId"
-		
+	protected boolean doUpdate() {
 		def rc = true
 		def start = System.currentTimeMillis()
 		def sdId = Configuration.GetServerProperty(Plugin.PROP_SD_USER, '')
@@ -255,18 +256,18 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 		LOG.info "Performed EPG download in ${System.currentTimeMillis() - start}ms"
 
 		start = System.currentTimeMillis()
-		addChannels(providerId)
+		addChannels()
 		LOG.info "Performed channel processing in ${System.currentTimeMillis() - start}ms"
 		
 		start = System.currentTimeMillis()
-		setLineupMap(providerId)
+		setLineupMap()
 		LOG.info "Performed lineup map configuration in ${System.currentTimeMillis() - start}ms"
 		
 		start = System.currentTimeMillis()
 		def clnt = null
 		try {
 			clnt = new ZipEpgClient(EPG_SRC)
-			clnt.getHeadendById(providerId).lineups[0].stations.findAll {
+			clnt.getHeadendById(providerId).lineups.find { it.device == deviceName }.stations.findAll {
 				def chan = ChannelAPI.GetChannelForStationID(it.id.toInteger())
 				return chan != null && ChannelAPI.IsChannelViewable(chan)
 			}.each { it.airings.each { addProgram(it.program); addAiring(it) } }
@@ -345,8 +346,9 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 		return b
 	}
 	
-	private boolean setLineupMap(String lineupId) {
-		def root = new File("${Plugin.RESOURCE_DIR}/lineup_editors/$lineupId")
+	private boolean setLineupMap() {
+		def lineupDir = Grabber.scrubFileName("$providerId:$deviceName")
+		def root = new File("${Plugin.RESOURCE_DIR}/lineup_editors/$lineupDir")
 		if(!root.exists() && !root.mkdirs()) {
 			LOG.error "Unable to create lineup editor directory! [$root.absolutePath]"
 			return true
@@ -355,7 +357,7 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 		def clnt = null
 		try {
 			clnt = new ZipEpgClient(EPG_SRC)
-			map = clnt.getHeadendById(lineupId).lineups[0].stationMap
+			map = clnt.getHeadendById(providerId).lineups.find { it.device == deviceName }.stationMap
 		} catch(Exception e) {
 			LOG.error 'sd4j error!', e
 		} finally {
@@ -375,18 +377,18 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 				LOG.warn "Lineup editors ignored: ${licResp.getMessage()}"
 		} else
 			LOG.warn 'Lineup editors ignored because they are disabled!'
-		if(db) db.setLineup HeadendMap.addId(lineupId), sageMap
-		if(LOG.isDebugEnabled()) LOG.debug "Lineup '$lineupId' created: $sageMap"
+		if(db) db.setLineup HeadendMap.addId("$providerId:$deviceName"), sageMap
+		if(LOG.isDebugEnabled()) LOG.debug "Lineup '$providerId:$deviceName' created: $sageMap"
 		return true
 	}
 
-	private boolean addChannels(def lineupId) {
+	private boolean addChannels() {
 		def rc = true
 		def chans = []
 		def clnt = null
 		try {
 			clnt = new ZipEpgClient(EPG_SRC)
-			clnt.getHeadendById(lineupId).lineups.each {
+			clnt.getHeadendById(providerId).lineups.each {
 				it.stations.each {
 					def chanId = it.id
 					def callsign = it.callsign

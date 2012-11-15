@@ -37,6 +37,22 @@ class InternalLogger {
 		}
 		log.level = Level.toLevel(logLevel)
 		log.additivity = false
+		initSd4j(logLevel)
+	}
+	
+	static void initSd4j(String logLevel) {
+		def log = Logger.getLogger('org.schedulesdirect')
+		def a = log.getAppender('sd4j')
+		if(!a) {
+			def p = new PatternLayout('%d %-5p [%c{1}]: %m%n')
+			a = new RollingFileAppender(p, new File(Plugin.RESOURCE_DIR, 'logs/sd4j-api.log').getAbsolutePath())
+			a.name = 'sd4j'
+			a.maxBackupIndex = 2
+			a.maxFileSize = '25MB'
+			log.addAppender(a)
+		}
+		log.level = Level.toLevel(logLevel)
+		log.additivity = false
 	}
 	
 	private InternalLogger() {}

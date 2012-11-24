@@ -261,6 +261,7 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 		
 		start = System.currentTimeMillis()
 		setLineupMap()
+		setPhysicalLineupMap()
 		LOG.info "Performed lineup map configuration in ${System.currentTimeMillis() - start}ms"
 		
 		start = System.currentTimeMillis()
@@ -378,6 +379,44 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 		} else
 			LOG.warn 'Lineup editors ignored because they are disabled!'
 		if(db) db.setLineup HeadendMap.addId("$providerId:$deviceName"), sageMap
+		if(LOG.isDebugEnabled()) LOG.debug "Lineup '$providerId:$deviceName' created: $sageMap"
+		return true
+	}
+
+	private boolean setPhysicalLineupMap() {
+		def lineupDir = Grabber.scrubFileName("$providerId:$deviceName")
+		def root = new File("${Plugin.RESOURCE_DIR}/lineup_editors/$lineupDir")
+		def map = [:]
+		def clnt = null
+		try {
+			clnt = new ZipEpgClient(EPG_SRC)
+			def lineup = clnt.getHeadendById(providerId).lineups.find { it.device == deviceName }
+			if(!lineup.hasPhysicalMapping()) {
+				LOG.debug "There is no physical mapping to process for this lineup! [$providerId:$deviceName]"
+				return true
+			}
+			LOG.debug "Processing physical mapping for lineup $providerId:$deviceName"
+			map = lineup.physicalStationMap
+		} catch(Exception e) {
+			LOG.error 'sd4j error!', e
+		} finally {
+			if(clnt) try { clnt.close() } catch(IOException e) {}
+		}
+		if(map.keySet().size() == 0) {
+			LOG.error 'Cannot process an empty lineup map!'
+			return false
+		}
+		def sageMap = [:]
+		map.each { k, v -> sageMap[k.toInteger()] = v as String[] }
+		if(lineupEditorsEnabled) {
+			if(licResp.isLicensed()) {
+				def editor = new LineupEditor(root)
+				editor.edit(sageMap).each { int k, v -> sageMap[k] = v as String[] }
+			} else
+				LOG.warn "Lineup editors ignored: ${licResp.getMessage()}"
+		} else
+			LOG.warn 'Lineup editors ignored because they are disabled!'
+		if(db) db.setPhysicalLineup HeadendMap.addId("$providerId:$deviceName"), sageMap
 		if(LOG.isDebugEnabled()) LOG.debug "Lineup '$providerId:$deviceName' created: $sageMap"
 		return true
 	}

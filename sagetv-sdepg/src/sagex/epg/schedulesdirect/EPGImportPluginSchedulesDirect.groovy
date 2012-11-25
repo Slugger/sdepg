@@ -95,9 +95,14 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 		def providers = []
 		def clnt = null
 		try {
-			if(EPG_SRC.exists())
-				clnt = new ZipEpgClient(EPG_SRC)
-			else
+			if(EPG_SRC.exists()) {
+				try {
+					clnt = new ZipEpgClient(EPG_SRC)
+				} catch(IOException e) {
+					LOG.warn 'Invalid zip file detected; ignoring it!', e
+				}
+			}
+			if(!clnt)
 				clnt = new NetworkEpgClient(sdId, sdPwd, EpgDownloader.generateUserAgent())
 				
 			/*

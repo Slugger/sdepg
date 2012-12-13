@@ -15,11 +15,10 @@
 */
 package sagex.epg.schedulesdirect.io
 
+import org.apache.commons.io.IOUtils
 import org.apache.log4j.Logger
-import org.schedulesdirect.api.NetworkEpgClient
-import org.schedulesdirect.api.ZipEpgClient
 
-import sagex.api.Global
+import sagex.api.ChannelAPI
 import sagex.api.PluginAPI
 import sagex.epg.schedulesdirect.EPGImportPluginSchedulesDirect
 import sagex.epg.schedulesdirect.plugin.Plugin
@@ -39,7 +38,7 @@ class EpgDownloader {
 		this.id = id
 		this.pwd = pwd
 	}
-	
+		
 	void download() throws IOException {
 		def targetDir = EPGImportPluginSchedulesDirect.EPG_SRC.parentFile
 		if(!targetDir.exists())
@@ -48,6 +47,15 @@ class EpgDownloader {
 		def plugin = PluginAPI.GetInstalledPlugins().find { PluginAPI.GetPluginIdentifier(it) == 'sdepg' }
 		def cmd = [new File("${System.getProperty('java.home')}/bin/java").absolutePath, "-Xmx${PluginAPI.GetPluginConfigValue(plugin, Plugin.PROP_GRABBER_HEAP)}m", '-jar', new File("${Plugin.RESOURCE_DIR}/tools/sd4j.jar").absolutePath]
 		cmd << '-c' << 'grab' << '-u' << id << '-p' << pwd << '-o' << targetFile.absolutePath << '-a' << generateUserAgent() << '-t' << PluginAPI.GetPluginConfigValue(plugin, Plugin.PROP_SD4J_THREADS)
+		def ignoreFile = new File(targetDir, 'ignore.txt')
+		ignoreFile.delete()
+		def ignoreList = ChannelAPI.GetAllChannels().findAll { !ChannelAPI.IsChannelViewable(it) }
+		if(ignoreList.size() > 0) {
+			ignoreFile.withWriterAppend('UTF-8') { f ->
+				ignoreList.each { f.append(Integer.toString(ChannelAPI.GetStationID(it)) + IOUtils.LINE_SEPARATOR)}
+			}
+			cmd << '-g' << ignoreFile.absolutePath
+		}
 		LOG.info cmd.toString().replace(pwd, '*****')
 		def p = cmd.execute()
 		def stdout = new StringBuilder()

@@ -53,6 +53,7 @@ final class Plugin extends AbstractPlugin {
 	static final String PROP_SD_PWD = "${PROP_PREFIX}/sdPassword"
 	static final String PROP_LOG_LEVEL = "${PROP_PREFIX}/logLevel"
 	static final String PROP_SD4J_THREADS = "${PROP_PREFIX}/sd4jThreads"
+	static final String PROP_GRABBER_HEAP = "${PROP_PREFIX}/grabberHeap"
 	static { InternalLogger.init(Configuration.GetServerProperty(PROP_LOG_LEVEL, 'INFO')) }
 	static private final Logger LOG = Logger.getLogger(Plugin)
 	
@@ -178,6 +179,10 @@ final class Plugin extends AbstractPlugin {
 		sd4jThreads.setPersistence(new ServerPropertyPersistence())
 		sd4jThreads.setValidator(new IntRangeValidator(1, 200))
 		
+		PluginProperty grabberHeap = new PluginProperty(SageTVPlugin.CONFIG_INTEGER, PROP_GRABBER_HEAP, '512', 'Max Heap for sd4j Grabber', 'Amount of heap to allocate for sd4j grabber, in MB.  Increase by 256 at a time as needed.')
+		grabberHeap.setPersistence(new ServerPropertyPersistence())
+		grabberHeap.setValidator(new IntRangeValidator(32, 1024))
+		
 		addProperty(refresh)
 		addProperty(sdUser)
 		addProperty(sdPwd)
@@ -189,6 +194,7 @@ final class Plugin extends AbstractPlugin {
 		addProperty(chanGenerators)
 		addProperty(lineupEditors)
 		addProperty(sd4jThreads)
+		addProperty(grabberHeap)
 	}
 	
 	@ConfigValueChangeHandler('sdepg/logLevel')

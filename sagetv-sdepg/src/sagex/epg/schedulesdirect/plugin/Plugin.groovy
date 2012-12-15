@@ -54,6 +54,8 @@ final class Plugin extends AbstractPlugin {
 	static final String PROP_LOG_LEVEL = "${PROP_PREFIX}/logLevel"
 	static final String PROP_SD4J_THREADS = "${PROP_PREFIX}/sd4jThreads"
 	static final String PROP_GRABBER_HEAP = "${PROP_PREFIX}/grabberHeap"
+	static final String PROP_CACHE_TTL = "${PROP_PREFIX}/cacheTTL";
+	static final String PROP_LAST_CACHE_PURGE = "${PROP_PREFIX}/lastCachePurge"
 	static { InternalLogger.init(Configuration.GetServerProperty(PROP_LOG_LEVEL, 'INFO')) }
 	static private final Logger LOG = Logger.getLogger(Plugin)
 	
@@ -183,6 +185,10 @@ final class Plugin extends AbstractPlugin {
 		grabberHeap.setPersistence(new ServerPropertyPersistence())
 		grabberHeap.setValidator(new IntRangeValidator(32, 1024))
 		
+		PluginProperty cacheTTL = new PluginProperty(SageTVPlugin.CONFIG_INTEGER, PROP_CACHE_TTL, '7', 'EPG Cache Cleanup', 'How often, in days, will the EPG cache be cleaned.')
+		cacheTTL.setPersistence(new ServerPropertyPersistence())
+		cacheTTL.setValidator(new IntRangeValidator(1, 30))
+		
 		addProperty(refresh)
 		addProperty(sdUser)
 		addProperty(sdPwd)
@@ -193,6 +199,7 @@ final class Plugin extends AbstractPlugin {
 		addProperty(airGenerators)
 		addProperty(chanGenerators)
 		addProperty(lineupEditors)
+		addProperty(cacheTTL)
 		addProperty(sd4jThreads)
 		addProperty(grabberHeap)
 	}

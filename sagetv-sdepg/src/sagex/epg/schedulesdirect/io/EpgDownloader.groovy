@@ -19,6 +19,7 @@ import org.apache.commons.io.IOUtils
 import org.apache.log4j.Logger
 
 import sagex.api.ChannelAPI
+import sagex.api.Configuration
 import sagex.api.PluginAPI
 import sagex.epg.schedulesdirect.EPGImportPluginSchedulesDirect
 import sagex.epg.schedulesdirect.plugin.Plugin
@@ -56,6 +57,11 @@ class EpgDownloader {
 			}
 			cmd << '-g' << ignoreFile.absolutePath
 		}
+		def cachePurged = false
+		if(System.currentTimeMillis() - (PluginAPI.GetPluginConfigValue(plugin, Plugin.PROP_CACHE_TTL).toLong() * 86400000L) > Configuration.GetServerProperty(Plugin.PROP_LAST_CACHE_PURGE, '0').toLong()) {
+			cmd << '-x'
+			cachePurged = true
+		}
 		LOG.info cmd.toString().replace(pwd, '*****')
 		def p = cmd.execute()
 		def stdout = new StringBuilder()
@@ -66,9 +72,14 @@ class EpgDownloader {
 			LOG.error("stdout:\n$stdout")
 			LOG.error("stderr:\n$stderr")
 			throw new IOException("sd4j download failed! [rc=${p.exitValue()}]")
-		} else if(LOG.isDebugEnabled()) {
-			LOG.debug("stdout:\n$stdout")
-			LOG.debug("stderr:\n$stderr")
+		} else {
+			if(cachePurged)
+				Configuration.SetServerProperty(Plugin.PROP_LAST_CACHE_PURGE, System.currentTimeMillis().toString())
+			if(LOG.isDebugEnabled()) {
+				LOG.debug("stdout:\n$stdout")
+				LOG.debug("stderr:\n$stderr")
+			}
 		}
+		ignoreFile.delete()
 	}
 }

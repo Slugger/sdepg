@@ -18,7 +18,7 @@
   <property name="src.token" value="@@" />
   <property name="app.res.dir" value="plugins/sdepg" />
   <property name="src" value="src" />
-  <property name="gh.secret.file" value="${user.home}/.gh.secret" />
+  <property name="gc.upload.settings" value="C:/snapshots/gc_login.properties" />
 	
   <path id="project.class.path">
   	<pathelement location="${sage.jar}" />
@@ -173,7 +173,6 @@
   	  <fileset dir=".">
   	  	<include name="*.log4j.properties" />
   	  	<include name="tools/*.jar" />
-  	  	<exclude name="tools/ghdlmgr.jar" />
   	  </fileset>
   	</copy>
   	<jar destfile="sdepg.jar" basedir="bld" />
@@ -190,21 +189,14 @@
   		if(!(properties['revision.num'] ==~ /^\d+$/))
   			throw new RuntimeException("Cannot upload a non-tagged build! [${String.format('%s.%s', properties['app.ver'], properties['revision.num'])}]")
   	]]></groovy>
-	<java jar="tools/ghdlmgr.jar" fork="true" failonerror="true">
-		<arg value="-a" />
-		<arg value="upload" />
-		<arg value="-o" />
-		<arg value="Slugger" />
-		<arg value="-r" />
-		<arg value="sagetv-sdepg" />
-		<arg value="-s" />
-		<arg value="@${gh.secret.file}" />
-		<arg value="--" />
-		<arg value="-f" />
-		<arg value="sdepg-jar-${app.ver}.${revision.num}.zip" />
-		<arg value="-f" />
-		<arg value="sdepg-conf-${app.ver}.${revision.num}.zip" />
-	</java>
+	<available file="${gc.upload.settings}" property="gc.upload.enable" />
+	<fail message="${gc.upload.settings} file does not exist!" unless="gc.upload.enable" />
+	<property file="${gc.upload.settings}" />
+	<fail message="gc.username must be defined in ${gc.upload.settings}" unless="gc.username" />
+	<fail message="gc.password must be defined in ${gc.upload.settings}" unless="gc.password" />
+	<taskdef classname="net.bluecow.googlecode.ant.GoogleCodeUploadTask" name="gcupload" />
+	<gcupload username="${gc.username}" password="${gc.password}" projectname="sagetv-addons" filename="sdepg-jar-${app.ver}.${revision.num}.zip" targetfilename="sdepg-jar-${app.ver}.${revision.num}.zip" summary="sdepg jar" labels="QA-Snapshot,Type-Plugin,OpSys-All" />
+	<gcupload username="${gc.username}" password="${gc.password}" projectname="sagetv-addons" filename="sdepg-conf-${app.ver}.${revision.num}.zip" targetfilename="sdepg-conf-${app.ver}.${revision.num}.zip" summary="sdepg config" labels="QA-Snapshot,Type-Plugin,OpSys-All" />
   </target>
 
   <target name="submit" depends="deliver" description="Submit plugin to SageTV repository">

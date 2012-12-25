@@ -46,8 +46,8 @@ class EpgDownloader {
 			targetDir.mkdirs()
 		def targetFile = EPGImportPluginSchedulesDirect.EPG_SRC
 		def plugin = PluginAPI.GetInstalledPlugins().find { PluginAPI.GetPluginIdentifier(it) == 'sdepg' }
-		def cmd = [new File("${System.getProperty('java.home')}/bin/java").absolutePath, "-Xmx${PluginAPI.GetPluginConfigValue(plugin, Plugin.PROP_GRABBER_HEAP)}m", '-jar', new File("${Plugin.RESOURCE_DIR}/tools/sd4j.jar").absolutePath]
-		cmd << '-c' << 'grab' << '-u' << id << '-p' << pwd << '-o' << targetFile.absolutePath << '-a' << generateUserAgent() << '-t' << PluginAPI.GetPluginConfigValue(plugin, Plugin.PROP_SD4J_THREADS)
+		def cmd = [new File("${System.getProperty('java.home')}/bin/java").absolutePath, "-Xmx${PluginAPI.GetPluginConfigValue(plugin, Plugin.PROP_GRABBER_HEAP)}m", '-jar', new File("${Plugin.RESOURCE_DIR}/tools/sdjson.jar").absolutePath]
+		cmd << '-c' << 'grab' << '-u' << id << '-p' << pwd << '-o' << targetFile.absolutePath << '-a' << generateUserAgent() << '-t' << PluginAPI.GetPluginConfigValue(plugin, Plugin.PROP_SDJSON_THREADS)
 		def ignoreFile = new File(targetDir, 'ignore.txt')
 		ignoreFile.delete()
 		def ignoreList = ChannelAPI.GetAllChannels().findAll { !ChannelAPI.IsChannelViewable(it) }
@@ -68,10 +68,10 @@ class EpgDownloader {
 		def stderr = new StringBuilder()
 		p.consumeProcessOutput(stdout, stderr)
 		if(p.waitFor()) {
-			LOG.error("sd4j download failed! [rc=${p.exitValue()}]")
+			LOG.error("sdjson download failed! [rc=${p.exitValue()}]")
 			LOG.error("stdout:\n$stdout")
 			LOG.error("stderr:\n$stderr")
-			throw new IOException("sd4j download failed! [rc=${p.exitValue()}]")
+			throw new IOException(" download failed! [rc=${p.exitValue()}]")
 		} else {
 			if(cachePurged)
 				Configuration.SetServerProperty(Plugin.PROP_LAST_CACHE_PURGE, System.currentTimeMillis().toString())

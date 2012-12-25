@@ -52,7 +52,7 @@ final class Plugin extends AbstractPlugin {
 	static final String PROP_SD_USER = "${PROP_PREFIX}/sdUser"
 	static final String PROP_SD_PWD = "${PROP_PREFIX}/sdPassword"
 	static final String PROP_LOG_LEVEL = "${PROP_PREFIX}/logLevel"
-	static final String PROP_SD4J_THREADS = "${PROP_PREFIX}/sd4jThreads"
+	static final String PROP_SDJSON_THREADS = "${PROP_PREFIX}/sdjsonThreads"
 	static final String PROP_GRABBER_HEAP = "${PROP_PREFIX}/grabberHeap"
 	static final String PROP_CACHE_TTL = "${PROP_PREFIX}/cacheTTL";
 	static final String PROP_LAST_CACHE_PURGE = "${PROP_PREFIX}/lastCachePurge"
@@ -177,11 +177,11 @@ final class Plugin extends AbstractPlugin {
 		PluginProperty logLvl = new PluginProperty(SageTVPlugin.CONFIG_CHOICE, PROP_LOG_LEVEL, 'INFO', 'Log Level', 'Select the level of logging performed by the plugin.  Changes are immediate.', ['TRACE', 'DEBUG', 'INFO', 'WARN', 'ERROR', 'FATAL'] as String[])
 		logLvl.setPersistence(new ServerPropertyPersistence())
 		
-		PluginProperty sd4jThreads = new PluginProperty(SageTVPlugin.CONFIG_INTEGER, PROP_SD4J_THREADS, '200', 'Worker Threads for SD4J Downloads', 'Maximum number of worker threads for downloading EPG data.  Only edit if you are told to or you know what you\'re doing.')
-		sd4jThreads.setPersistence(new ServerPropertyPersistence())
-		sd4jThreads.setValidator(new IntRangeValidator(1, 200))
+		PluginProperty sdjsonThreads = new PluginProperty(SageTVPlugin.CONFIG_INTEGER, PROP_SDJSON_THREADS, '200', 'Worker Threads for sdjson Downloads', 'Maximum number of worker threads for downloading EPG data.  Only edit if you are told to or you know what you\'re doing.')
+		sdjsonThreads.setPersistence(new ServerPropertyPersistence())
+		sdjsonThreads.setValidator(new IntRangeValidator(1, 200))
 		
-		PluginProperty grabberHeap = new PluginProperty(SageTVPlugin.CONFIG_INTEGER, PROP_GRABBER_HEAP, '512', 'Max Heap for sd4j Grabber', 'Amount of heap to allocate for sd4j grabber, in MB.  Increase by 256 at a time as needed.')
+		PluginProperty grabberHeap = new PluginProperty(SageTVPlugin.CONFIG_INTEGER, PROP_GRABBER_HEAP, '512', 'Max Heap for sd4j Grabber', 'Amount of heap to allocate for sdjson grabber, in MB.  Increase by 256 at a time as needed.')
 		grabberHeap.setPersistence(new ServerPropertyPersistence())
 		grabberHeap.setValidator(new IntRangeValidator(32, 1024))
 		
@@ -200,7 +200,7 @@ final class Plugin extends AbstractPlugin {
 		addProperty(chanGenerators)
 		addProperty(lineupEditors)
 		addProperty(cacheTTL)
-		addProperty(sd4jThreads)
+		addProperty(sdjsonThreads)
 		addProperty(grabberHeap)
 	}
 	

@@ -47,7 +47,7 @@ import com.google.code.sagetvaddons.license.LicenseResponse
 class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 	static { Class.forName('sagex.epg.schedulesdirect.plugin.Plugin') } // Init the logger only once
 	static private final Logger LOG = Logger.getLogger(EPGImportPluginSchedulesDirect)
-	static final File EPG_SRC = new File(Plugin.RESOURCE_DIR, 'epg.zip')
+	static final File EPG_SRC = new File(Plugin.RESOURCE_DIR, 'sdjson.epg')
 
 	private IEPGDBPublicAdvanced db
 	private Map processedPrograms

@@ -236,7 +236,7 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 		if(db && !db.addShowPublic2(sProg.title, sProg.episodeTitle, sProg.description, 0L,
 			catList as String[], sProg.sageCredits.getNames() as String[],
 			sProg.sageCredits.getRoles() as byte[], sProg.mpaaRating != Program.MPAARating.NONE ? sProg.mpaaRating.toString() : null, sProg.advisories,
-			sProg.year > 0 ? sProg.year.toString() : null, null, null, sProg.id, null,
+			sProg.year > 0 ? sProg.year.toString() : null, null, getBonusDetails(sProg), sProg.id, null,
 			sProg.originalAirDate ? sProg.originalAirDate.getTime() : 0L, sProg.seasonNum as short,
 			sProg.episodeNum as short, sProg.forceUnique)) {
 			LOG.error "Failed to add show to database for '$show.externalId'"
@@ -246,6 +246,12 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 		return sProg
 	}
 
+	protected String[] getBonusDetails(SageProgram sProg) {
+		if(sProg.starRating)
+			return [sProg.starRating] as String[]
+		return null
+	}
+	
 	protected boolean doUpdate() {
 		def rc = true
 		def start = System.currentTimeMillis()

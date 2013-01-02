@@ -181,7 +181,7 @@ final class Plugin extends AbstractPlugin {
 		sdjsonThreads.setPersistence(new ServerPropertyPersistence())
 		sdjsonThreads.setValidator(new IntRangeValidator(1, 200))
 		
-		PluginProperty grabberHeap = new PluginProperty(SageTVPlugin.CONFIG_INTEGER, PROP_GRABBER_HEAP, '512', 'Max Heap for sd4j Grabber', 'Amount of heap to allocate for sdjson grabber, in MB.  Increase by 256 at a time as needed.')
+		PluginProperty grabberHeap = new PluginProperty(SageTVPlugin.CONFIG_INTEGER, PROP_GRABBER_HEAP, '512', 'Max Heap for sdjson Grabber', 'Amount of heap to allocate for sdjson grabber, in MB.')
 		grabberHeap.setPersistence(new ServerPropertyPersistence())
 		grabberHeap.setValidator(new IntRangeValidator(32, 1024))
 		

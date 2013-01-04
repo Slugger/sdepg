@@ -56,6 +56,11 @@ final class Plugin extends AbstractPlugin {
 	static final String PROP_GRABBER_HEAP = "${PROP_PREFIX}/grabberHeap"
 	static final String PROP_CACHE_TTL = "${PROP_PREFIX}/cacheTTL";
 	static final String PROP_LAST_CACHE_PURGE = "${PROP_PREFIX}/lastCachePurge"
+	static final String PROP_SDJSON_URL = "${PROP_PREFIX}/sdjsonUrl"
+	static final String PROP_SDJSON_PROG_CHUNK = "${PROP_PREFIX}/sdjsonProgChunk"
+	static final String PROP_SDJSON_SCHED_CHUNK = "${PROP_PREFIX}/sdjsonSchedChunk"
+	static final String PROP_GRABBER_LOG_LVL = "${PROP_PREFIX}/grabberLogLvl"
+	
 	static { InternalLogger.init(Configuration.GetServerProperty(PROP_LOG_LEVEL, 'INFO')) }
 	static private final Logger LOG = Logger.getLogger(Plugin)
 	
@@ -189,6 +194,20 @@ final class Plugin extends AbstractPlugin {
 		cacheTTL.setPersistence(new ServerPropertyPersistence())
 		cacheTTL.setValidator(new IntRangeValidator(1, 30))
 		
+		PluginProperty sdjsonUrl = new PluginProperty(SageTVPlugin.CONFIG_TEXT, PROP_SDJSON_URL, 'https://data2.schedulesdirect.org', 'Base URL for sdjson', 'The base URL to use for sdjson; only change is told to.')
+		sdjsonUrl.setPersistence(new ServerPropertyPersistence())
+		
+		PluginProperty sdjsonProgChunk = new PluginProperty(SageTVPlugin.CONFIG_INTEGER, PROP_SDJSON_PROG_CHUNK, '50000', 'Max Program Request for sdjson', 'Maximum size of a program request to Schedules Direct.  Change only if told to.')
+		sdjsonProgChunk.setPersistence(new ServerPropertyPersistence())
+		sdjsonProgChunk.setValidator(new IntRangeValidator(10, 50000))
+		
+		PluginProperty sdjsonSchedChunk = new PluginProperty(SageTVPlugin.CONFIG_INTEGER, PROP_SDJSON_SCHED_CHUNK, '1000', 'Max Schedule Requeset for sdjson', 'Maximum size of a schedule request to Schedules Direct.  Change only if told to.')
+		sdjsonSchedChunk.setPersistence(new ServerPropertyPersistence())
+		sdjsonSchedChunk.setValidator(new IntRangeValidator(10, 1000))
+		
+		PluginProperty grabberLogLvl = new PluginProperty(SageTVPlugin.CONFIG_CHOICE, PROP_GRABBER_LOG_LVL, 'INFO', 'Log Level for sdjson Grabber', 'Set the log level for the sdjson grabber application.', ['TRACE', 'DEBUG', 'INFO', 'WARN', 'ERROR', 'FATAL'] as String[])
+		grabberLogLvl.setPersistence(new ServerPropertyPersistence())
+		
 		addProperty(refresh)
 		addProperty(sdUser)
 		addProperty(sdPwd)
@@ -200,8 +219,12 @@ final class Plugin extends AbstractPlugin {
 		addProperty(chanGenerators)
 		addProperty(lineupEditors)
 		addProperty(cacheTTL)
-		addProperty(sdjsonThreads)
+		addProperty(sdjsonUrl)
+		addProperty(grabberLogLvl)
 		addProperty(grabberHeap)
+		addProperty(sdjsonSchedChunk)
+		addProperty(sdjsonProgChunk)
+		addProperty(sdjsonThreads)
 	}
 	
 	@ConfigValueChangeHandler('sdepg/logLevel')

@@ -48,6 +48,10 @@ class EpgDownloader {
 		def plugin = PluginAPI.GetInstalledPlugins().find { PluginAPI.GetPluginIdentifier(it) == 'sdepg' }
 		def cmd = [new File("${System.getProperty('java.home')}/bin/java").absolutePath, "-Xmx${PluginAPI.GetPluginConfigValue(plugin, Plugin.PROP_GRABBER_HEAP)}m", '-jar', new File("${Plugin.RESOURCE_DIR}/tools/sdjson.jar").absolutePath]
 		cmd << '-c' << 'grab' << '-u' << id << '-p' << pwd << '-o' << targetFile.absolutePath << '-a' << generateUserAgent() << '-t' << PluginAPI.GetPluginConfigValue(plugin, Plugin.PROP_SDJSON_THREADS)
+		cmd << '-b' << PluginAPI.GetPluginConfigValue(plugin, Plugin.PROP_SDJSON_URL)
+		cmd << '-pc' << PluginAPI.GetPluginConfigValue(plugin, Plugin.PROP_SDJSON_PROG_CHUNK)
+		cmd << '-sc' << PluginAPI.GetPluginConfigValue(plugin, Plugin.PROP_SDJSON_SCHED_CHUNK)
+		cmd << '-l' << PluginAPI.GetPluginConfigValue(plugin, Plugin.PROP_GRABBER_LOG_LVL)
 		def ignoreFile = new File(targetDir, 'ignore.txt')
 		ignoreFile.delete()
 		def ignoreList = ChannelAPI.GetAllChannels().findAll { !ChannelAPI.IsChannelViewable(it) }

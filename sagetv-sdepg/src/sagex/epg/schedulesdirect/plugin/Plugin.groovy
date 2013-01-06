@@ -194,14 +194,14 @@ final class Plugin extends AbstractPlugin {
 		cacheTTL.setPersistence(new ServerPropertyPersistence())
 		cacheTTL.setValidator(new IntRangeValidator(1, 30))
 		
-		PluginProperty sdjsonUrl = new PluginProperty(SageTVPlugin.CONFIG_TEXT, PROP_SDJSON_URL, 'https://data2.schedulesdirect.org', 'Base URL for sdjson', 'The base URL to use for sdjson; only change is told to.')
+		PluginProperty sdjsonUrl = new PluginProperty(SageTVPlugin.CONFIG_TEXT, PROP_SDJSON_URL, 'https://data2.schedulesdirect.org', 'Base URL for sdjson', 'The base URL to use for sdjson; only change if told to.')
 		sdjsonUrl.setPersistence(new ServerPropertyPersistence())
 		
 		PluginProperty sdjsonProgChunk = new PluginProperty(SageTVPlugin.CONFIG_INTEGER, PROP_SDJSON_PROG_CHUNK, '50000', 'Max Program Request for sdjson', 'Maximum size of a program request to Schedules Direct.  Change only if told to.')
 		sdjsonProgChunk.setPersistence(new ServerPropertyPersistence())
 		sdjsonProgChunk.setValidator(new IntRangeValidator(10, 50000))
 		
-		PluginProperty sdjsonSchedChunk = new PluginProperty(SageTVPlugin.CONFIG_INTEGER, PROP_SDJSON_SCHED_CHUNK, '1000', 'Max Schedule Requeset for sdjson', 'Maximum size of a schedule request to Schedules Direct.  Change only if told to.')
+		PluginProperty sdjsonSchedChunk = new PluginProperty(SageTVPlugin.CONFIG_INTEGER, PROP_SDJSON_SCHED_CHUNK, '1000', 'Max Schedule Request for sdjson', 'Maximum size of a schedule request to Schedules Direct.  Change only if told to.')
 		sdjsonSchedChunk.setPersistence(new ServerPropertyPersistence())
 		sdjsonSchedChunk.setValidator(new IntRangeValidator(10, 1000))
 		

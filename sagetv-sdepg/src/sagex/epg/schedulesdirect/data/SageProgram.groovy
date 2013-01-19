@@ -1,5 +1,5 @@
 /*
-*      Copyright 2012 Battams, Derek
+*      Copyright 2012-2013 Battams, Derek
 *
 *       Licensed under the Apache License, Version 2.0 (the "License");
 *       you may not use this file except in compliance with the License.
@@ -67,7 +67,7 @@ public class SageProgram {
 	}
 	
 	protected void checkForSENumbers() {
-		def tvdb = __src.metadata.find { it['datasource'] == 'thetvdb' }
+		def tvdb = __src.metadata.find { it['dataSource'] == 'thetvdb' }
 		if(tvdb) {
 			def s = tvdb['season']?.toInteger()
 			def e = tvdb['episode']?.toInteger()

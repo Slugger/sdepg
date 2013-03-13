@@ -1,5 +1,5 @@
 /*
- *      Copyright 2011-2012 Battams, Derek
+ *      Copyright 2011-2013 Battams, Derek
  *
  *       Licensed under the Apache License, Version 2.0 (the "License");
  *       you may not use this file except in compliance with the License.
@@ -88,10 +88,9 @@ abstract class EpgFilterEngine implements Runnable {
 					return fName.toLowerCase().endsWith(EpgFilterEngine.SCRIPT_EXTENSION)
 				}
 			})
-			if(files) {
+			if(files != null)
 				Arrays.sort files
-				new Thread(this).start()
-			}
+			new Thread(this).start()
 		}
 		if(files)
 			files.each { filter(it, target) }

@@ -1,5 +1,5 @@
 /*
-*      Copyright 2011-2012 Battams, Derek
+*      Copyright 2011-2013 Battams, Derek
 *
 *       Licensed under the Apache License, Version 2.0 (the "License");
 *       you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import org.apache.log4j.Level
 import org.apache.log4j.Logger
 import org.apache.log4j.SimpleLayout
 
-class Generator {
+abstract class Generator {
 
 	static final String SCRIPT_EXTENSION = '.groovy'
 	static final String APPENDER_NAME = '_sdepg'

@@ -160,9 +160,9 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 		this.db = db ? new EPGDBPublicAdvancedImpl((sage.z)db) : null
 		airingFilter.resetLogger()
 		programFilter.resetLogger()
+		processProgramGenerators()
 		doUpdate()
 		LOG.debug "Processed ${uniqueShows + skippedShows} show(s); UNIQUE: ${uniqueShows}; SKIPPED: ${skippedShows}"
-		processProgramGenerators()
 		processAiringGenerators()
 		processedPrograms.clear()
 		return true

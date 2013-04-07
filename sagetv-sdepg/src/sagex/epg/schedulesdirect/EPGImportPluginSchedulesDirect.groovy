@@ -186,7 +186,7 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 			if(licResp.isLicensed()) {
 				programGenerator.generate().each {
 					if(db && !db.addShowPublic2(it.title, it.episodeTitle, it.description, 0L,
-			it.categories, it.credits.names as String[], it.credits.roles as byte[], it.rating,
+			it.categories, it?.credits?.names as String[], it?.credits?.roles as byte[], it.rating,
 			it.advisories, it.year > 0 ? it.year.toString() : null, null, null, it.id, null,
 			it.originalAirDate ? it.originalAirDate.time : 0L, it.seasonNumber, it.episodeNumber,
 			it.forceUnique))

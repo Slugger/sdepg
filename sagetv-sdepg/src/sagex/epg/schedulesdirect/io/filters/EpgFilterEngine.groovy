@@ -41,7 +41,7 @@ abstract class EpgFilterEngine implements Runnable {
 		logName = "sagex.epg.schedulesdirect.logging.filters.$type"
 	}
 
-	void resetLogger() {
+	protected void resetLogger() {
 		Logger log = Logger.getLogger(logName)
 		log.getAllAppenders().toList().each {
 			it.close()
@@ -94,6 +94,7 @@ abstract class EpgFilterEngine implements Runnable {
 		}
 		if(files)
 			files.each { filter(it, target) }
+		resetLogger()
 	}
 	
 	void run() {

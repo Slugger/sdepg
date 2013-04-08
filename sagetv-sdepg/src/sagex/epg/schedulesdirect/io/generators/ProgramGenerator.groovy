@@ -41,7 +41,6 @@ class ProgramGenerator extends Generator {
 	GeneratedProgram[] generate() {
 		LOG.debug 'Program generator processing has started!'
 		def start = System.currentTimeMillis()
-		resetLogger()
 		files = new File(root).list(new FilenameFilter() {
 			boolean accept(File f, String fName) {
 				return fName.toLowerCase().endsWith(Generator.SCRIPT_EXTENSION)
@@ -62,6 +61,7 @@ class ProgramGenerator extends Generator {
 			} else
 				LOG.error "Script '$it' did not return a collection of GeneratedProgram objects; result ignored!"
 		}
+		resetLogger()
 		LOG.info "Processed show generators in ${System.currentTimeMillis() - start}ms"
 		return shows
 	}	

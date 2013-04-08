@@ -1,5 +1,5 @@
 /*
-*      Copyright 2011-2012 Battams, Derek
+*      Copyright 2011-2013 Battams, Derek
 *
 *       Licensed under the Apache License, Version 2.0 (the "License");
 *       you may not use this file except in compliance with the License.
@@ -41,7 +41,6 @@ class AiringGenerator extends Generator {
 	SageAiring[] generate() {
 		LOG.debug 'Airing generator processing has started!'
 		def start = System.currentTimeMillis()
-		resetLogger()
 		files = new File(root).list(new FilenameFilter() {
 			boolean accept(File f, String fName) {
 				return fName.toLowerCase().endsWith(Generator.SCRIPT_EXTENSION)
@@ -62,6 +61,7 @@ class AiringGenerator extends Generator {
 			} else
 				LOG.error "Script '$it' did not return a collection of SageAiring objects; result ignored!"
 		}
+		resetLogger()
 		LOG.info "Processed airing generators in ${System.currentTimeMillis() - start}ms"
 		return airs
 	}

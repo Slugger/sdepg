@@ -60,6 +60,7 @@ final class Plugin extends AbstractPlugin {
 	static final String PROP_SDJSON_PROG_CHUNK = "${PROP_PREFIX}/sdjsonProgChunk"
 	static final String PROP_SDJSON_SCHED_CHUNK = "${PROP_PREFIX}/sdjsonSchedChunk"
 	static final String PROP_GRABBER_LOG_LVL = "${PROP_PREFIX}/grabberLogLvl"
+	static final String PROP_FORCED_REFRESH = "${PROP_PREFIX}/forcedRefresh"
 	
 	static { InternalLogger.init(Configuration.GetServerProperty(PROP_LOG_LEVEL, 'INFO')) }
 	static private final Logger LOG = Logger.getLogger(Plugin)
@@ -111,9 +112,7 @@ final class Plugin extends AbstractPlugin {
 	@ButtonClickHandler('sdepg/refresh')
 	public void refreshEpgData() {
 		LOG.info 'EPG refresh forced by user!'
-		def src = EPGImportPluginSchedulesDirect.EPG_SRC
-		if(src.exists() && src.delete())
-			LOG.warn "Cached EPG data deleted! [$src]"
+		Configuration.SetServerProperty(PROP_FORCED_REFRESH, 'true')
 		def epg = new EPGImportPluginSchedulesDirect()
 		epg.getProviders().each {
 			LOG.info "Refreshed lineup '${it[1]}'"

@@ -66,6 +66,11 @@ class EpgDownloader {
 			cmd << '-x'
 			cachePurged = true
 		}
+		if(Boolean.parseBoolean(Configuration.GetServerProperty(Plugin.PROP_FORCED_REFRESH, 'false'))) {
+			Configuration.SetServerProperty(Plugin.PROP_FORCED_REFRESH, 'false')
+			cmd << '-f'
+			LOG.info('-f flag inserted via user refresh request!')
+		}
 		LOG.info cmd.toString().replace(pwd, '*****')
 		def p = cmd.execute()
 		def stdout = new StringBuilder()

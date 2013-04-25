@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
-<!--  Copyright 2012 Battams, Derek 												-->
+<!--  Copyright 2012-2013 Battams, Derek 											-->
 <!-- 																				-->       
 <!--   Licensed under the Apache License, Version 2.0 (the "License");				-->
 <!--   you may not use this file except in compliance with the License.				-->
@@ -180,6 +180,12 @@
   	<checksum file="sdepg-jar-${app.ver}.${revision.num}.zip" property="bin.jar.md5" />
   	<replace file="sagetv.plugin.xml" token="@@JAR_MD5@@" value="${bin.jar.md5}" />
   	<zip destfile="sdepg-conf-${app.ver}.${revision.num}.zip" basedir="plugin" />
+  	<zip destfile="sdepg-conf-${app.ver}.${revision.num}.zip" update="true">
+  		<zipfileset dir="web" prefix="webserver/groovy/sdjson" excludes="web.menu" />
+  	</zip>
+  	<zip destfile="sdepg-conf-${app.ver}.${revision.num}.zip" update="true">
+  		<zipfileset dir="web" prefix="plugins/sdepg" includes="web.menu" />
+  	</zip>
   	<checksum file="sdepg-conf-${app.ver}.${revision.num}.zip" property="bin.conf.md5" />
   	<replace file="sagetv.plugin.xml" token="@@CONF_MD5@@" value="${bin.conf.md5}" />
   </target>

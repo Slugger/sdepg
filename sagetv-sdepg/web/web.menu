@@ -1,0 +1,8 @@
+!!menuRoot
+        <li id="menuSchedulesDirect"><a href="#">Schedules Direct</a>
+            <ul>
+                <li><a href="/sage/sdjson/index.gsp">Status/Messages</a></li>
+                <li><a href="/sage/sdjson/index.gsp?m=headends">Configure Lineups</a></li>
+                <li><a href="/sage/sdjson/index.gsp?m=chpwd">Change Password</a></li>
+            </ul>
+        </li>

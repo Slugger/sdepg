@@ -67,10 +67,10 @@ public class SageProgram {
 	}
 	
 	protected void checkForSENumbers() {
-		def tvdb = __src.metadata.find { it['dataSource'] == 'thetvdb' }
-		if(tvdb) {
-			def s = tvdb['season']?.toInteger()
-			def e = tvdb['episode']?.toInteger()
+		def data = __src.metadata.find { it['dataSource'] ==~ /thetvdb|tvrage/ && it.containsKey('season') && it.containsKey('episode') }
+		if(data) {
+			def s = data['season']?.toInteger()
+			def e = data['episode']?.toInteger()
 			if(s > 0 && e > 0) {
 				seasonNum = s
 				episodeNum = e

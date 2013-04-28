@@ -98,7 +98,7 @@
 		e.printStackTrace(new PrintWriter(stack))
 		def mb = new groovy.xml.MarkupBuilder(out)
 		mb.h2('Schedules Direct service is currently offline!')
-		mb.p('Please come back later.  Detailes of the situation are below.')
+		mb.p('Please come back later.  Details of the situation are below.')
 		mb.pre stack
 	}
 %>

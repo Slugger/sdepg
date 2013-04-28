@@ -1,5 +1,5 @@
 /*
-*      Copyright 2011-2012 Battams, Derek
+*      Copyright 2011-2013 Battams, Derek
 *
 *       Licensed under the Apache License, Version 2.0 (the "License");
 *       you may not use this file except in compliance with the License.
@@ -61,6 +61,12 @@ final class Plugin extends AbstractPlugin {
 	static final String PROP_SDJSON_SCHED_CHUNK = "${PROP_PREFIX}/sdjsonSchedChunk"
 	static final String PROP_GRABBER_LOG_LVL = "${PROP_PREFIX}/grabberLogLvl"
 	static final String PROP_FORCED_REFRESH = "${PROP_PREFIX}/forcedRefresh"
+	static final String PROP_SE_SRC = "${PROP_PREFIX}/seSource"
+	
+	static final String OPT_SE_SRC_TVRAGE_PREF = 'tvrage (preferred)'
+	static final String OPT_SE_SRC_TVRAGE_ONLY = 'tvrage (only)'
+	static final String OPT_SE_SRC_TVDB_PREF   = 'tvdb (preferred)'
+	static final String OPT_SE_SRC_TVDB_ONLY   = 'tvdb (only)'
 	
 	static { InternalLogger.init(Configuration.GetServerProperty(PROP_LOG_LEVEL, 'INFO')) }
 	static private final Logger LOG = Logger.getLogger(Plugin)
@@ -206,11 +212,15 @@ final class Plugin extends AbstractPlugin {
 		
 		PluginProperty grabberLogLvl = new PluginProperty(SageTVPlugin.CONFIG_CHOICE, PROP_GRABBER_LOG_LVL, 'INFO', 'Log Level for sdjson Grabber', 'Set the log level for the sdjson grabber application.', ['TRACE', 'DEBUG', 'INFO', 'WARN', 'ERROR', 'FATAL'] as String[])
 		grabberLogLvl.setPersistence(new ServerPropertyPersistence())
-		
+
+		PluginProperty seSrc = new PluginProperty(SageTVPlugin.CONFIG_CHOICE, PROP_SE_SRC, OPT_SE_SRC_TVRAGE_PREF, 'S/E Source', 'Select the source of S/E data; if \'only\' is selected then nothing is loaded if the source isn\'t avaiable.', [OPT_SE_SRC_TVRAGE_PREF, OPT_SE_SRC_TVDB_PREF, OPT_SE_SRC_TVRAGE_ONLY, OPT_SE_SRC_TVDB_ONLY] as String[])
+		seSrc.setPersistence(new ServerPropertyPersistence())
+
 		addProperty(refresh)
 		addProperty(sdUser)
 		addProperty(sdPwd)
 		addProperty(logLvl)
+		addProperty(seSrc)
 		addProperty(showFilters)
 		addProperty(airFilters)
 		addProperty(showGenerators)

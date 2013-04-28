@@ -18,10 +18,11 @@ package sagex.epg.schedulesdirect.data
 import java.util.regex.Pattern
 
 import org.apache.log4j.Logger
-import org.schedulesdirect.api.Airing
 import org.schedulesdirect.api.Program
 
 import sage.EPGDBPublic
+import sagex.api.Configuration
+import sagex.epg.schedulesdirect.plugin.Plugin
 import sagex.epg.schedulesdirect.sagetv.helpers.IEPGDBPublicAdvanced
 
 /**
@@ -67,7 +68,32 @@ public class SageProgram {
 	}
 	
 	protected void checkForSENumbers() {
-		def data = __src.metadata.find { it['dataSource'] ==~ /thetvdb|tvrage/ && it.containsKey('season') && it.containsKey('episode') }
+		def allData = __src.metadata.findAll { it['dataSource'] ==~ /thetvdb|tvrage/ && it.containsKey('season') && it.containsKey('episode') && it['season'].toInteger() > 0 && it['episode'].toInteger() > 0 }
+		def data = null
+		if(allData.size() > 1) {
+			switch(Configuration.GetServerProperty(Plugin.PROP_SE_SRC, '')) {
+				case Plugin.OPT_SE_SRC_TVRAGE_PREF:
+				case Plugin.OPT_SE_SRC_TVRAGE_ONLY:
+					data = allData.find { it['dataSource'] == 'tvrage' }
+					break
+				default:
+					data = allData.find { it['dataSource'] == 'thetvdb' }
+			}
+		} else if(allData.size() == 1) {
+			switch(Configuration.GetServerProperty(Plugin.PROP_SE_SRC, '')) {
+				case Plugin.OPT_SE_SRC_TVRAGE_PREF:
+				case Plugin.OPT_SE_SRC_TVDB_PREF:
+					data = allData[0]
+					break
+				case Plugin.OPT_SE_SRC_TVRAGE_ONLY:
+					if(allData[0]['dataSource'] == 'tvrage')
+						data = allData[0]
+					break
+				case Plugin.OPT_SE_SRC_TVDB_ONLY:
+					if(allData[0]['dataSource'] == 'thetvdb')
+						data = allData[0]
+			}
+		}
 		if(data) {
 			def s = data['season']?.toInteger()
 			def e = data['episode']?.toInteger()

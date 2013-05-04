@@ -19,10 +19,12 @@
 	import sagex.api.*
 	import org.schedulesdirect.api.NetworkEpgClient
 	import org.schedulesdirect.api.exception.ServiceOfflineException
+	import sagex.epg.schedulesdirect.io.EpgDownloader
+	
 	final PLUGIN = PluginAPI.GetInstalledPlugins().find { PluginAPI.GetPluginIdentifier(it) == 'sdepg' }
 	request.setAttribute('plugin', PLUGIN)
 	try {
-		request.setAttribute('clnt', new NetworkEpgClient(PluginAPI.GetPluginConfigValue(PLUGIN, 'sdepg/sdUser'), PluginAPI.GetPluginConfigValue(PLUGIN, 'sdepg/sdPassword'), "sagetv-sdepg/${PluginAPI.GetPluginVersion(PLUGIN)}", PluginAPI.GetPluginConfigValue(PLUGIN, 'sdepg/sdjsonUrl'), false))	
+		request.setAttribute('clnt', new NetworkEpgClient(PluginAPI.GetPluginConfigValue(PLUGIN, 'sdepg/sdUser'), PluginAPI.GetPluginConfigValue(PLUGIN, 'sdepg/sdPassword'), EpgDownloader.generateUserAgent(), PluginAPI.GetPluginConfigValue(PLUGIN, 'sdepg/sdjsonUrl'), false))	
 		if(params.c) {
 			def clnt = request.getAttribute('clnt')
 			def result = []

@@ -25,14 +25,12 @@
 		<tr>
 			<th><input type="checkbox" name="_" id="headends" /></th>
 			<th>ID</th>
-			<th>Total Lineups</th>
 			<th>Description</th>
 		</tr>
 		<% mub = new groovy.xml.MarkupBuilder(out); clnt.headends.each { he ->
 			mub.tr {
 				td { input(type:'checkbox', name:'heid', value:he.id, class:'regId') }
 				td he.id
-				td he.lineups.size()
 				td "$he.name $he.location"
 			}
 		} %>
@@ -54,7 +52,6 @@
 			<tr>
 				<th><input type="checkbox" name="_" id="newHeadends" /></th>
 				<th>ID</th>
-				<th>Total Lineups</th>
 				<th>Description</th>
 			</tr>
 		</thead>

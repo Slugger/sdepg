@@ -15,17 +15,17 @@
  */
 import org.schedulesdirect.api.NetworkEpgClient
 import sagex.api.*
+import sagex.epg.schedulesdirect.io.EpgDownloader
 
 final PLUGIN = PluginAPI.GetInstalledPlugins().find { PluginAPI.GetPluginIdentifier(it) == 'sdepg' }
 switch(params.c) {
 	case 'search':
-		def clnt = new NetworkEpgClient(PluginAPI.GetPluginConfigValue(PLUGIN, 'sdepg/sdUser'), PluginAPI.GetPluginConfigValue(PLUGIN, 'sdepg/sdPassword'), "sagetv-sdepg/${PluginAPI.GetPluginVersion(PLUGIN)}", PluginAPI.GetPluginConfigValue(PLUGIN, 'sdepg/sdjsonUrl'), false)
+		def clnt = new NetworkEpgClient(PluginAPI.GetPluginConfigValue(PLUGIN, 'sdepg/sdUser'), PluginAPI.GetPluginConfigValue(PLUGIN, 'sdepg/sdPassword'), EpgDownloader.generateUserAgent(), PluginAPI.GetPluginConfigValue(PLUGIN, 'sdepg/sdjsonUrl'), false)
 		def html = new groovy.xml.MarkupBuilder(out)
 		clnt.getHeadends(params.z).each { he ->
 			html.tr {
 				td { input(type:'checkbox', name:'heid', value:he.id, class:'newId') }
 				td he.id
-				td he.lineups.size()
 				td "$he.name $he.location"
 			}
 		}

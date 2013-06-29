@@ -172,6 +172,12 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 				airingGenerator.generate().each {
 					if(db && !db.addAiringPublic2(it.programId, it.stationId, it.startTime, it.durationMillis, getPartsByte(it.partNumber, it.totalParts), getMiscInt(it), it.tvRating != Airing.TvRating.NONE ? it?.tvRating.toString() : null))
 						LOG.error "Failed to insert airing details for:\n$it\n"
+					else if(db && it.broadcastLanguage != null && it.broadcastLanguage.toLowerCase() != 'english') {
+						// TODO Must be able to load a Program from wiz.bin, reset the lang desc then reinsert it into wiz.bin
+						// Going to have to be able to create a SageProgram from wiz.bin??  A lot of hassle for something unlikely to be used so leaving it for now
+						// If someone needs this they'll see the logged warning below and raise an issue ticket; then I'll figure it out
+						LOG.warn "Generated airing has a non-English broadcast languge, but it's ignored because it cannot be set from Airing generators at this time! [$it.id :: $it.broadcastLanguage]"
+					}
 				}
 			} else
 				LOG.warn "Not processing airing generators: ${licResp.getMessage()}"
@@ -234,7 +240,7 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 		if(db && !db.addShowPublic2(sProg.title, sProg.episodeTitle, sProg.description, 0L,
 			catList as String[], sProg.sageCredits.getNames() as String[],
 			sProg.sageCredits.getRoles() as byte[], sProg.mpaaRating != Program.MPAARating.NONE ? sProg.mpaaRating.toString() : null, sProg.advisories,
-			sProg.year > 0 ? sProg.year.toString() : null, null, getBonusDetails(sProg), sProg.id, null,
+			sProg.year > 0 ? sProg.year.toString() : null, null, getBonusDetails(sProg), sProg.id, getLanguage(sProg),
 			sProg.originalAirDate ? sProg.originalAirDate.getTime() : 0L, sProg.seasonNum as short,
 			sProg.episodeNum as short, sProg.forceUnique)) {
 			LOG.error "Failed to add show to database for '$show.externalId'"
@@ -244,6 +250,14 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 		return sProg
 	}
 
+	protected String getLanguage(SageProgram sProg) {
+		def lang = sProg.descriptionLanguage
+		if(lang == null || lang.toLowerCase() == 'english')
+			return null
+		else
+			return lang
+	}
+	
 	protected String[] getBonusDetails(SageProgram sProg) {
 		if(sProg.starRating)
 			return [sProg.starRating] as String[]
@@ -315,6 +329,14 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 		} else if(!airFilterDisabledLogged) {
 			LOG.warn 'Airing filters are disabled in the plugin settings!'
 			airFilterDisabledLogged = true
+		}
+		def lang = air.broadcastLanguage
+		if(lang != null && lang.toLowerCase() != 'english') {
+			def prog = air.program
+			prog.descriptionLanguage = lang
+			addProgram(prog)
+			if(LOG.isDebugEnabled())
+				LOG.debug "Overriding program language for $prog.id; setting it to '$lang'"
 		}
 		return db && !db.addAiringPublic2(air.id, air.station.id.toInteger(), air.gmtStart.time, 1000L * air.duration, getPartsByte(air.partNum, air.totalParts), getMiscInt(air), air.tvRating != Airing.TvRating.NONE ? air.tvRating.toString() : null)
 	}

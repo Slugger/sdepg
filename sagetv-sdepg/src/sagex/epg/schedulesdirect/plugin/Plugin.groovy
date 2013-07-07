@@ -158,7 +158,7 @@ final class Plugin extends AbstractPlugin {
 		airFilters.setPersistence(new ServerPropertyPersistence())
 		airFilters.setVisibility vis
 			
-		PluginProperty refresh = new PluginProperty(SageTVPlugin.CONFIG_BUTTON, PROP_REFRESH, 'Refresh EPG', 'Refresh EPG Data Now', 'Click this button to force a refresh of your EPG data now.  This will delete currently cached EPG data.')
+		PluginProperty refresh = new PluginProperty(SageTVPlugin.CONFIG_BUTTON, PROP_REFRESH, 'Refresh EPG', 'Refresh EPG Data Now', 'Click this button to force a refresh of your EPG data now.')
 		refresh.setPersistence(new NoPropertyPersistence())
 		refresh.setVisibility vis
 		

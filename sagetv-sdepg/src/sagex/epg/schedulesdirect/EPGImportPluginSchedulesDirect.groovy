@@ -48,11 +48,12 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 	static { Class.forName('sagex.epg.schedulesdirect.plugin.Plugin') } // Init the logger only once
 	static private final Logger LOG = Logger.getLogger(EPGImportPluginSchedulesDirect)
 	static final File EPG_SRC = new File(Plugin.RESOURCE_DIR, 'sdjson.epg')
-
+	
 	private IEPGDBPublicAdvanced db
 	private Map processedPrograms
 	private def uniqueShows
 	private def skippedShows
+	private def reloadedShows
 	private ProgramFilter programFilter
 	private AiringFilter airingFilter
 	private ProgramGenerator programGenerator
@@ -156,11 +157,12 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 		programGeneratorsEnabled = Boolean.parseBoolean(Configuration.GetServerProperty(Plugin.PROP_SHOW_GENERATORS, 'true'))
 		uniqueShows = 0
 		skippedShows = 0
+		reloadedShows = 0
 		processedPrograms.clear()
 		this.db = db ? new EPGDBPublicAdvancedImpl((sage.z)db) : null
 		processProgramGenerators()
 		doUpdate()
-		LOG.debug "Processed ${uniqueShows + skippedShows} show(s); UNIQUE: ${uniqueShows}; SKIPPED: ${skippedShows}"
+		LOG.debug "Processed ${uniqueShows + skippedShows + reloadedShows} show(s); UNIQUE: ${uniqueShows}; RELOADED: ${reloadedShows}; SKIPPED: ${skippedShows}"
 		processAiringGenerators()
 		processedPrograms.clear()
 		return true
@@ -202,10 +204,13 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 			LOG.warn 'Not processing show generators because they are disabled!'
 	}
 	
-	protected SageProgram addProgram(Program prog) {
+	protected SageProgram addProgram(Program prog, boolean forceLoad = false) {
 		if(processedPrograms.containsKey(prog.id)) {
-			++skippedShows
-			return processedPrograms.get(prog.id)
+			if(!forceLoad) {
+				++skippedShows
+				return processedPrograms.get(prog.id)
+			}
+			++reloadedShows
 		} else
 			++uniqueShows
 		SageProgram sProg = new SageProgram(prog)
@@ -252,7 +257,7 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 
 	protected String getLanguage(SageProgram sProg) {
 		def lang = sProg.descriptionLanguage
-		if(lang == null || lang.toLowerCase() == 'english')
+		if(lang == null || lang.length() == 0 || lang.toLowerCase() == 'english')
 			return null
 		else
 			return lang
@@ -331,12 +336,12 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 			airFilterDisabledLogged = true
 		}
 		def lang = air.broadcastLanguage
-		if(lang != null && lang.toLowerCase() != 'english') {
+		if(lang && lang.toLowerCase() != 'english' && !air.program.descriptionLanguage) {
 			def prog = air.program
-			prog.descriptionLanguage = lang
-			addProgram(prog)
 			if(LOG.isDebugEnabled())
-				LOG.debug "Overriding program language for $prog.id; setting it to '$lang'"
+				LOG.debug "Overriding program language for $prog.id; '$prog.descriptionLanguage' => '$lang'"
+			prog.descriptionLanguage = lang
+			addProgram(prog, true)
 		}
 		return db && !db.addAiringPublic2(air.id, air.station.id.toInteger(), air.gmtStart.time, 1000L * air.duration, getPartsByte(air.partNum, air.totalParts), getMiscInt(air), air.tvRating != Airing.TvRating.NONE ? air.tvRating.toString() : null)
 	}

@@ -120,9 +120,10 @@ final class Plugin extends AbstractPlugin {
 		LOG.info 'EPG refresh forced by user!'
 		Configuration.SetServerProperty(PROP_FORCED_REFRESH, 'true')
 		def epg = new EPGImportPluginSchedulesDirect()
-		epg.getProviders().each {
+		epg.getProviders().findResult {
 			LOG.info "Refreshed lineup '${it[1]}'"
 			forceRefresh(it[1])
+			return true
 		}
 		Global.RemoveUnusedLineups()
 	}
@@ -130,10 +131,11 @@ final class Plugin extends AbstractPlugin {
 	protected void forceRefresh(String lineupName) {
 		def chans = Database.GetChannelsOnLineup(lineupName)
 		if(chans.size() > 0) {
-			def nums = ChannelAPI.GetChannelNumbersForLineup(chans[0], lineupName)
-			def vis = ChannelAPI.IsChannelViewableOnNumberOnLineup(chans[0], nums[0], lineupName)
-			ChannelAPI.SetChannelViewabilityForChannelNumberOnLineup(chans[0], nums[0], lineupName, !vis)
-			ChannelAPI.SetChannelViewabilityForChannelNumberOnLineup(chans[0], nums[0], lineupName, vis)
+			def i = (int)(chans.size() / 2)
+			def nums = ChannelAPI.GetChannelNumbersForLineup(chans[i], lineupName)
+			def vis = ChannelAPI.IsChannelViewableOnNumberOnLineup(chans[i], nums[i], lineupName)
+			ChannelAPI.SetChannelViewabilityForChannelNumberOnLineup(chans[i], nums[i], lineupName, !vis)
+			ChannelAPI.SetChannelViewabilityForChannelNumberOnLineup(chans[i], nums[i], lineupName, vis)
 		}
 	}
 	

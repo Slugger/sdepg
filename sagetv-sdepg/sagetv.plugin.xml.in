@@ -39,7 +39,7 @@ Please note that some features of this plugin are disabled without a sagetv-addo
         </Dependency>
         <Dependency>
         	<Plugin>sdjson-api</Plugin>
-        	<MinVersion>0.20130512.0.0</MinVersion>
+        	<MinVersion>0.20130512.1.0</MinVersion>
         </Dependency>
         <Dependency>
         	<Plugin>sagex-api</Plugin>

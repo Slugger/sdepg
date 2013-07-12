@@ -49,7 +49,7 @@
                     def rev = it.substring(index + 1)
     				index = rev.indexOf('-')
     				def sageRev = index >= 0 ? rev.substring(0, index + 2).replaceAll('-', '.') : rev
-					def logRoot = rev != sageRev ? "${ver}.${rev.substring(0, rev.indexOf('-')).toInteger()}" : "${ver}.${rev.toInteger() - 1}"
+					def logRoot = rev != sageRev ? "${ver}.${rev.substring(0, rev.indexOf('-')).toInteger()}" : "${ver}.${rev.toInteger() > 0 ? rev.toInteger() - 1 : 0}"
     				def logTail = rev != sageRev ? 'HEAD' : "${ver}.$rev"
                     println "Setting app.ver to: $ver"
                     println "Setting revision.num to: $rev"

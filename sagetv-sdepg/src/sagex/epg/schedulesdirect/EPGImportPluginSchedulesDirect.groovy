@@ -338,8 +338,8 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 		def lang = air.broadcastLanguage
 		if(lang && lang.toLowerCase() != 'english' && !air.program.descriptionLanguage) {
 			def prog = air.program
-			if(LOG.isDebugEnabled())
-				LOG.debug "Overriding program language for $prog.id; '$prog.descriptionLanguage' => '$lang'"
+			if(LOG.isTraceEnabled())
+				LOG.trace "Overriding program language for $prog.id; '$prog.descriptionLanguage' => '$lang'"
 			prog.descriptionLanguage = lang
 			addProgram(prog, true)
 		}

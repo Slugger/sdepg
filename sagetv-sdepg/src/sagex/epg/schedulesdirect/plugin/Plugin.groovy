@@ -117,26 +117,29 @@ final class Plugin extends AbstractPlugin {
 	
 	@ButtonClickHandler('sdepg/refresh')
 	public void refreshEpgData() {
-		LOG.info 'EPG refresh forced by user!'
 		Configuration.SetServerProperty(PROP_FORCED_REFRESH, 'true')
 		def epg = new EPGImportPluginSchedulesDirect()
-		epg.getProviders().findResult {
-			LOG.info "Refreshed lineup '${it[1]}'"
-			forceRefresh(it[1])
-			return true
-		}
+		if(epg.getProviders().findResult { return forceRefresh(it[1]) })
+			LOG.info 'EPG refresh forced by user!'
+		else
+			LOG.warn 'Unable to force EPG refresh!'
 		Global.RemoveUnusedLineups()
 	}
 
-	protected void forceRefresh(String lineupName) {
+	protected def forceRefresh(String lineupName) {
 		def chans = Database.GetChannelsOnLineup(lineupName)
 		if(chans.size() > 0) {
-			def i = (int)(chans.size() / 2)
-			def nums = ChannelAPI.GetChannelNumbersForLineup(chans[i], lineupName)
-			def vis = ChannelAPI.IsChannelViewableOnNumberOnLineup(chans[i], nums[i], lineupName)
-			ChannelAPI.SetChannelViewabilityForChannelNumberOnLineup(chans[i], nums[i], lineupName, !vis)
-			ChannelAPI.SetChannelViewabilityForChannelNumberOnLineup(chans[i], nums[i], lineupName, vis)
+			for(def i = 0; i < chans.size(); ++i) {
+				def nums = ChannelAPI.GetChannelNumbersForLineup(chans[i], lineupName)
+				if(nums.size() == 1) {
+					def vis = ChannelAPI.IsChannelViewableOnNumberOnLineup(chans[i], nums[0], lineupName)
+					ChannelAPI.SetChannelViewabilityForChannelNumberOnLineup(chans[i], nums[0], lineupName, !vis)
+					ChannelAPI.SetChannelViewabilityForChannelNumberOnLineup(chans[i], nums[0], lineupName, vis)
+					return true
+				}
+			}
 		}
+		return null
 	}
 	
 	@Override

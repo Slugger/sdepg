@@ -69,37 +69,31 @@ public class SageProgram {
 	
 	protected void checkForSENumbers() {
 		def seSrc = Configuration.GetServerProperty(Plugin.PROP_SE_SRC, '') 
-		def regEx = /Tribune|thetvdb|tvrage/
-		switch(seSrc) {
-			case Plugin.OPT_SE_SRC_TRIBUNE_ONLY:
-				regEx = /Tribune/; break
-			case Plugin.OPT_SE_SRC_TVRAGE_ONLY:
-				regEx = /tvrage/; break
-			case Plugin.OPT_SE_SRC_TVDB_ONLY:
-				regEx = /thetvdb/; break
-		}
-		def allData = __src.metadata.findAll { it['dataSource'] ==~ regEx && it.containsKey('season') && it.containsKey('episode') && it['season'].toInteger() > 0 && it['episode'].toInteger() > 0 }
+		def allData = __src.metadata.findAll { def src = it.keySet().toArray()[0]; it[src].has('season') && it[src].has('episode') && it[src]['season'].toInteger() > 0 && it[src]['episode'].toInteger() > 0 }
 		def data = null
-		if(allData.size() == 1)
-			data = allData[0]
-		else if(allData.size() > 1) {
+		if(allData.size() > 0) {
 			switch(seSrc) {
+				case Plugin.OPT_SE_SRC_TVRAGE_ONLY:
 				case Plugin.OPT_SE_SRC_TVRAGE_PREF:
-					data = allData.find { it['dataSource'] == 'tvrage' }
+					data = allData.find { it.keySet().toArray()[0] == 'tvrage' }
+					if(!data && seSrc == Plugin.OPT_SE_SRC_TVRAGE_PREF) data = allData[0]
 					break
+				case Plugin.OPT_SE_SRC_TRIBUNE_ONLY:	
 				case Plugin.OPT_SE_SRC_TRIBUNE_PREF:
-					data = allData.find { it['dataSource'] == 'Tribune' }
+					data = allData.find { it.keySet().toArray()[0] == 'Tribune' }
+					if(!data && seSrc == Plugin.OPT_SE_SRC_TRIBUNE_PREF) data = allData[0]
 					break
+				case Plugin.OPT_SE_SRC_TVDB_ONLY:
 				case Plugin.OPT_SE_SRC_TVDB_PREF:
-					data = allData.find { it['dataSource'] == 'thetvdb' }
+					data = allData.find { it.keySet().toArray()[0] == 'tvdb' }
+					if(!data && seSrc == Plugin.OPT_SE_SRC_TVDB_PREF) data = allData[0]
 					break
-				default:
-					data = allData[0]
 			}
 		}
 		if(data) {
-			def s = data['season']?.toInteger()
-			def e = data['episode']?.toInteger()
+			def key = data.keySet().toArray()[0]
+			def s = data[key]['season']?.toInteger()
+			def e = data[key]['episode']?.toInteger()
 			if(s > 0 && e > 0) {
 				seasonNum = s
 				episodeNum = e

@@ -24,6 +24,7 @@ import org.schedulesdirect.grabber.Grabber
 
 import sage.EPGDBPublic
 import sage.EPGImportPlugin
+import sagex.SageAPI
 import sagex.api.ChannelAPI
 import sagex.api.Configuration
 import sagex.api.Global
@@ -40,6 +41,7 @@ import sagex.epg.schedulesdirect.io.lineups.LineupEditor
 import sagex.epg.schedulesdirect.plugin.Plugin
 import sagex.epg.schedulesdirect.sagetv.helpers.EPGDBPublicAdvancedImpl
 import sagex.epg.schedulesdirect.sagetv.helpers.IEPGDBPublicAdvanced
+import sagex.remote.rmi.RMISageAPI
 
 import com.google.code.sagetvaddons.license.License
 import com.google.code.sagetvaddons.license.LicenseResponse
@@ -275,7 +277,8 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 		def sdId = Configuration.GetServerProperty(Plugin.PROP_SD_USER, '')
 		def sdPwd = Configuration.GetServerProperty(Plugin.PROP_SD_PWD, '')
 		try {
-			new EpgDownloader(sdId, sdPwd).download()
+			if(db)
+				new EpgDownloader(sdId, sdPwd).download()
 		} catch(IOException e) {
 			LOG.error 'Download of EPG data failed!', e
 			Global.DebugLog('EPG update failed: Download of data from sd4j failed!  See plugin logs for details.')
@@ -500,5 +503,10 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 		} else
 			LOG.warn 'Not processing channel generators because they are disabled!'
 		return rc
+	}
+	
+	static void main(String[] args) {
+		SageAPI.setProvider(new RMISageAPI(args[0]))
+		new EPGImportPluginSchedulesDirect().updateGuide('508278033', null)
 	}
 }

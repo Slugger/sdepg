@@ -68,30 +68,33 @@ public class SageProgram {
 	}
 	
 	protected void checkForSENumbers() {
-		def allData = __src.metadata.findAll { it['dataSource'] ==~ /thetvdb|tvrage/ && it.containsKey('season') && it.containsKey('episode') && it['season'].toInteger() > 0 && it['episode'].toInteger() > 0 }
+		def seSrc = Configuration.GetServerProperty(Plugin.PROP_SE_SRC, '') 
+		def regEx = /Tribune|thetvdb|tvrage/
+		switch(seSrc) {
+			case Plugin.OPT_SE_SRC_TRIBUNE_ONLY:
+				regEx = /Tribune/; break
+			case Plugin.OPT_SE_SRC_TVRAGE_ONLY:
+				regEx = /tvrage/; break
+			case Plugin.OPT_SE_SRC_TVDB_ONLY:
+				regEx = /thetvdb/; break
+		}
+		def allData = __src.metadata.findAll { it['dataSource'] ==~ regEx && it.containsKey('season') && it.containsKey('episode') && it['season'].toInteger() > 0 && it['episode'].toInteger() > 0 }
 		def data = null
-		if(allData.size() > 1) {
-			switch(Configuration.GetServerProperty(Plugin.PROP_SE_SRC, '')) {
+		if(allData.size() == 1)
+			data = allData[0]
+		else if(allData.size() > 1) {
+			switch(seSrc) {
 				case Plugin.OPT_SE_SRC_TVRAGE_PREF:
-				case Plugin.OPT_SE_SRC_TVRAGE_ONLY:
 					data = allData.find { it['dataSource'] == 'tvrage' }
 					break
-				default:
-					data = allData.find { it['dataSource'] == 'thetvdb' }
-			}
-		} else if(allData.size() == 1) {
-			switch(Configuration.GetServerProperty(Plugin.PROP_SE_SRC, '')) {
-				case Plugin.OPT_SE_SRC_TVRAGE_PREF:
+				case Plugin.OPT_SE_SRC_TRIBUNE_PREF:
+					data = allData.find { it['dataSource'] == 'Tribune' }
+					break
 				case Plugin.OPT_SE_SRC_TVDB_PREF:
+					data = allData.find { it['dataSource'] == 'thetvdb' }
+					break
+				default:
 					data = allData[0]
-					break
-				case Plugin.OPT_SE_SRC_TVRAGE_ONLY:
-					if(allData[0]['dataSource'] == 'tvrage')
-						data = allData[0]
-					break
-				case Plugin.OPT_SE_SRC_TVDB_ONLY:
-					if(allData[0]['dataSource'] == 'thetvdb')
-						data = allData[0]
 			}
 		}
 		if(data) {

@@ -61,8 +61,10 @@ final class Plugin extends AbstractPlugin {
 	static final String PROP_SDJSON_SCHED_CHUNK = "${PROP_PREFIX}/sdjsonSchedChunk"
 	static final String PROP_GRABBER_LOG_LVL = "${PROP_PREFIX}/grabberLogLvl"
 	static final String PROP_FORCED_REFRESH = "${PROP_PREFIX}/forcedRefresh"
-	static final String PROP_SE_SRC = "${PROP_PREFIX}/seSource"
+	static final String PROP_SE_SRC = "${PROP_PREFIX}/seSource2"
 	
+	static final String OPT_SE_SRC_TRIBUNE_PREF = 'Tribune (preferred)'
+	static final String OPT_SE_SRC_TRIBUNE_ONLY = 'Tribune (only)'
 	static final String OPT_SE_SRC_TVRAGE_PREF = 'tvrage (preferred)'
 	static final String OPT_SE_SRC_TVRAGE_ONLY = 'tvrage (only)'
 	static final String OPT_SE_SRC_TVDB_PREF   = 'tvdb (preferred)'
@@ -218,7 +220,7 @@ final class Plugin extends AbstractPlugin {
 		PluginProperty grabberLogLvl = new PluginProperty(SageTVPlugin.CONFIG_CHOICE, PROP_GRABBER_LOG_LVL, 'INFO', 'Log Level for sdjson Grabber', 'Set the log level for the sdjson grabber application.', ['TRACE', 'DEBUG', 'INFO', 'WARN', 'ERROR', 'FATAL'] as String[])
 		grabberLogLvl.setPersistence(new ServerPropertyPersistence())
 
-		PluginProperty seSrc = new PluginProperty(SageTVPlugin.CONFIG_CHOICE, PROP_SE_SRC, OPT_SE_SRC_TVRAGE_PREF, 'S/E Source', 'Select the source of S/E data; if \'only\' is selected then nothing is loaded if the source isn\'t avaiable.', [OPT_SE_SRC_TVRAGE_PREF, OPT_SE_SRC_TVDB_PREF, OPT_SE_SRC_TVRAGE_ONLY, OPT_SE_SRC_TVDB_ONLY] as String[])
+		PluginProperty seSrc = new PluginProperty(SageTVPlugin.CONFIG_CHOICE, PROP_SE_SRC, OPT_SE_SRC_TRIBUNE_PREF, 'S/E Source', 'Select the source of S/E data; if \'only\' is selected then nothing is loaded if the source isn\'t avaiable.', [OPT_SE_SRC_TRIBUNE_PREF, OPT_SE_SRC_TRIBUNE_ONLY, OPT_SE_SRC_TVRAGE_PREF, OPT_SE_SRC_TVDB_PREF, OPT_SE_SRC_TVRAGE_ONLY, OPT_SE_SRC_TVDB_ONLY] as String[])
 		seSrc.setPersistence(new ServerPropertyPersistence())
 
 		addProperty(refresh)

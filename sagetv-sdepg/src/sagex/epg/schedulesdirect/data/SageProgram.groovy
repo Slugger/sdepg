@@ -18,6 +18,7 @@ package sagex.epg.schedulesdirect.data
 import java.util.regex.Pattern
 
 import org.apache.log4j.Logger
+import org.json.JSONObject
 import org.schedulesdirect.api.Program
 
 import sage.EPGDBPublic
@@ -69,7 +70,15 @@ public class SageProgram {
 	
 	protected void checkForSENumbers() {
 		def seSrc = Configuration.GetServerProperty(Plugin.PROP_SE_SRC, '') 
-		def allData = __src.metadata.findAll { def src = it.keySet().toArray()[0]; it[src].has('season') && it[src].has('episode') && it[src]['season'].toInteger() > 0 && it[src]['episode'].toInteger() > 0 }
+		def allData = __src.metadata.findAll {
+			def src = it.keySet().toArray()[0]
+			if(it[src] instanceof JSONObject)
+				it[src].has('season') && it[src].has('episode') && it[src]['season'].toInteger() > 0 && it[src]['episode'].toInteger() > 0
+			else {
+				LOG.warn "Metadata for $id is invalid!"
+				return false
+			}
+		}
 		def data = null
 		if(allData.size() > 0) {
 			switch(seSrc) {

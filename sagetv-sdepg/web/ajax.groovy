@@ -22,7 +22,7 @@ switch(params.c) {
 	case 'search':
 		def clnt = new NetworkEpgClient(PluginAPI.GetPluginConfigValue(PLUGIN, 'sdepg/sdUser'), PluginAPI.GetPluginConfigValue(PLUGIN, 'sdepg/sdPassword'), EpgDownloader.generateUserAgent(), PluginAPI.GetPluginConfigValue(PLUGIN, 'sdepg/sdjsonUrl'), false)
 		def html = new groovy.xml.MarkupBuilder(out)
-		clnt.getHeadends(params.z).each { he ->
+		clnt.getHeadends(params.z, params.i).each { he ->
 			html.tr {
 				td { input(type:'checkbox', name:'heid', value:he.id, class:'newId') }
 				td he.id

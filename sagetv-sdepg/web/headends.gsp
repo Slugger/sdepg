@@ -42,6 +42,10 @@
 <div>
 	<span>Enter zip/postal code:</span>
 	<span><input type="text" name="zip" id="srchInput" /></span>
+</div>
+<div>
+	<span>Enter ISO country code:</span>
+	<span><input type="text" name="country" id="srchCountry" /></span>
 	<span><input type="button" id="search" value="Search" /></span>
 </div>
 <form action="index.gsp" method="post" id="addFrm" style="visibility: hidden;">
@@ -82,7 +86,7 @@
 		\$.ajax({
 			url: '/sage/sdjson/ajax.groovy',
 			context: \$(this),
-			data: {'z': \$('#srchInput').val(), 'c': 'search'},
+			data: {'z': \$('#srchInput').val(), 'c': 'search', 'i': \$('#srchCountry').val()},
 			success: function() {
 				\$('#srchResults').html(arguments[0]);
 				\$('#addFrm').css('visibility', 'visible');

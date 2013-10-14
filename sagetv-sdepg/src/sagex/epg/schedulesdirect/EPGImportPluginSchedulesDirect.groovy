@@ -15,6 +15,7 @@
 */
 package sagex.epg.schedulesdirect
 
+import org.apache.log4j.Level
 import org.apache.log4j.Logger
 import org.schedulesdirect.api.Airing
 import org.schedulesdirect.api.NetworkEpgClient

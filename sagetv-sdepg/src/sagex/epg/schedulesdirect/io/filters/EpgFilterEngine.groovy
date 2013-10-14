@@ -88,9 +88,10 @@ abstract class EpgFilterEngine implements Runnable {
 					return fName.toLowerCase().endsWith(EpgFilterEngine.SCRIPT_EXTENSION)
 				}
 			})
-			if(files != null)
+			if(files != null) {
 				Arrays.sort files
-			new Thread(this).start()
+				new Thread(this).start()
+			}
 		}
 		if(files)
 			files.each { filter(it, target) }

@@ -1,5 +1,5 @@
 /*
-*      Copyright 2011-2012 Battams, Derek
+*      Copyright 2011-2013 Battams, Derek
 *
 *       Licensed under the Apache License, Version 2.0 (the "License");
 *       you may not use this file except in compliance with the License.
@@ -47,11 +47,12 @@ class EpgDownloader {
 		def targetFile = EPGImportPluginSchedulesDirect.EPG_SRC
 		def plugin = PluginAPI.GetInstalledPlugins().find { PluginAPI.GetPluginIdentifier(it) == 'sdepg' }
 		def cmd = [new File("${System.getProperty('java.home')}/bin/java").absolutePath, "-Xmx${PluginAPI.GetPluginConfigValue(plugin, Plugin.PROP_GRABBER_HEAP)}m", '-jar', new File("${Plugin.RESOURCE_DIR}/tools/sdjson.jar").absolutePath]
-		cmd << '-c' << 'grab' << '-u' << id << '-p' << pwd << '-o' << targetFile.absolutePath << '-a' << generateUserAgent() << '-t' << PluginAPI.GetPluginConfigValue(plugin, Plugin.PROP_SDJSON_THREADS)
-		cmd << '-b' << PluginAPI.GetPluginConfigValue(plugin, Plugin.PROP_SDJSON_URL)
-		cmd << '-pc' << PluginAPI.GetPluginConfigValue(plugin, Plugin.PROP_SDJSON_PROG_CHUNK)
-		cmd << '-sc' << PluginAPI.GetPluginConfigValue(plugin, Plugin.PROP_SDJSON_SCHED_CHUNK)
-		cmd << '-l' << PluginAPI.GetPluginConfigValue(plugin, Plugin.PROP_GRABBER_LOG_LVL)
+		cmd << '--username' << id << '--password' << pwd << '--user-agent' << generateUserAgent() << '--max-threads' << PluginAPI.GetPluginConfigValue(plugin, Plugin.PROP_SDJSON_THREADS)
+		cmd << '--url' << PluginAPI.GetPluginConfigValue(plugin, Plugin.PROP_SDJSON_URL)
+		cmd << '--grabber-log-level' << PluginAPI.GetPluginConfigValue(plugin, Plugin.PROP_GRABBER_LOG_LVL)
+		cmd << 'grab' << '--target' << targetFile.absolutePath
+		cmd << '--max-prog-chunk' << PluginAPI.GetPluginConfigValue(plugin, Plugin.PROP_SDJSON_PROG_CHUNK)
+		cmd << '--max-sched-chunk' << PluginAPI.GetPluginConfigValue(plugin, Plugin.PROP_SDJSON_SCHED_CHUNK)
 		def ignoreFile = new File(targetDir, 'ignore.txt')
 		ignoreFile.delete()
 		def ignoreList = ChannelAPI.GetAllChannels().findAll { !ChannelAPI.IsChannelViewable(it) }
@@ -59,17 +60,17 @@ class EpgDownloader {
 			ignoreFile.withWriterAppend('UTF-8') { f ->
 				ignoreList.each { f.append(Integer.toString(ChannelAPI.GetStationID(it)) + IOUtils.LINE_SEPARATOR)}
 			}
-			cmd << '-g' << ignoreFile.absolutePath
+			cmd << '--ignore-stations' << ignoreFile.absolutePath
 		}
 		def cachePurged = false
 		if(System.currentTimeMillis() - (PluginAPI.GetPluginConfigValue(plugin, Plugin.PROP_CACHE_TTL).toLong() * 86400000L) > Configuration.GetServerProperty(Plugin.PROP_LAST_CACHE_PURGE, '0').toLong()) {
-			cmd << '-x'
+			cmd << '--purge-cache'
 			cachePurged = true
 		}
 		if(Boolean.parseBoolean(Configuration.GetServerProperty(Plugin.PROP_FORCED_REFRESH, 'false'))) {
 			Configuration.SetServerProperty(Plugin.PROP_FORCED_REFRESH, 'false')
-			cmd << '-f'
-			LOG.info('-f flag inserted via user refresh request!')
+			cmd << '--force-download'
+			LOG.info('--force-download flag inserted via user refresh request!')
 		}
 		LOG.info cmd.toString().replace(pwd, '*****')
 		def p = cmd.execute()

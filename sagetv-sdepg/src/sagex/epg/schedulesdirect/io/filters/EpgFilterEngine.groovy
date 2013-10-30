@@ -76,7 +76,7 @@ abstract class EpgFilterEngine implements Runnable {
 			engine.run(scriptName, binding)
 		} catch(ScriptException e) {
 			LOG.error "Parsing of '$absPath' failed!", e
-		} catch(RuntimeException e) {
+		} catch(Throwable e) {
 			LOG.error "Runtime error with '$absPath'!", e
 		}
 	}

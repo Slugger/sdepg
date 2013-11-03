@@ -18,7 +18,7 @@
   <property name="src.token" value="@@" />
   <property name="app.res.dir" value="plugins/sdepg" />
   <property name="src" value="src" />
-  <property name="upload.settings" value="${user.home}/.sage_ftp" />
+  <property name="upload.settings" value="${user.home}/.upload_sdepg" />
 	
   <path id="project.class.path">
   	<pathelement location="${sage.jar}" />
@@ -198,13 +198,13 @@
 	<available file="${upload.settings}" property="upload.enable" />
 	<fail message="${upload.settings} file does not exist!" unless="upload.enable" />
 	<property file="${upload.settings}" />
-	<fail message="upload.username must be defined in ${upload.settings}" unless="upload.username" />
-	<fail message="upload.password must be defined in ${upload.settings}" unless="upload.password" />
-	<ftp server="${upload.host}" userid="${upload.username}" password="${upload.password}" remotedir="${upload.root}" depends="yes">
+	<sshexec host="${shell.host}" username="${upload.username},sagetv-addons" keyfile="${upload.key}" command="create" />
+	<sshexec host="${shell.host}" username="${upload.username}" keyfile="${upload.key}" command="mkdir -p ${upload.root}" />
+	<scp todir="${upload.username}@${upload.host}:${upload.root}" keyfile="${upload.key}" passphrase="${upload.key.passphrase}">
 		<fileset dir=".">
 			<include name="sdepg-*.zip" />
 		</fileset>
-	</ftp>
+	</scp>
   </target>
 
   <target name="submit" depends="deliver" description="Submit plugin to SageTV repository">

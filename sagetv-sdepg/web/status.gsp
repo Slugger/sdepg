@@ -23,6 +23,7 @@
 	<li><b>User:</b> $clnt.userStatus.userId</li>
 	<li><b>Account Expires:</b> $clnt.userStatus.expires</li>
 	<li><b>Last server EPG update:</b> $clnt.userStatus.lastServerRefresh</li>
+	<li><b>Server status:</b> $clnt.systemStatus.status as of $clnt.systemStatus.statusDate [msg: $clnt.systemStatus.statusMessage]</li>
 	<li><b>Maximum lineups:</b> $clnt.userStatus.maxLineups</li>
 	<li><b>Configured lineups:</b> ${clnt.userStatus.headendInfo.size()}</li>
 </ul>

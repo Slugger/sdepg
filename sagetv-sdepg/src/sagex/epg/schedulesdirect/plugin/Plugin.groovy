@@ -62,6 +62,7 @@ final class Plugin extends AbstractPlugin {
 	static final String PROP_GRABBER_LOG_LVL = "${PROP_PREFIX}/grabberLogLvl"
 	static final String PROP_FORCED_REFRESH = "${PROP_PREFIX}/forcedRefresh"
 	static final String PROP_SE_SRC = "${PROP_PREFIX}/seSource2"
+	static final String PROP_INST_LOGOS = "${PROP_PREFIX}/installLogos"
 	
 	static final String OPT_SE_SRC_TRIBUNE_PREF = 'Tribune (preferred)'
 	static final String OPT_SE_SRC_TRIBUNE_ONLY = 'Tribune (only)'
@@ -226,12 +227,16 @@ final class Plugin extends AbstractPlugin {
 
 		PluginProperty seSrc = new PluginProperty(SageTVPlugin.CONFIG_CHOICE, PROP_SE_SRC, OPT_SE_SRC_TRIBUNE_PREF, 'S/E Source', 'Select the source of S/E data; if \'only\' is selected then nothing is loaded if the source isn\'t avaiable.', [OPT_SE_SRC_TRIBUNE_PREF, OPT_SE_SRC_TRIBUNE_ONLY, OPT_SE_SRC_TVRAGE_PREF, OPT_SE_SRC_TVDB_PREF, OPT_SE_SRC_TVRAGE_ONLY, OPT_SE_SRC_TVDB_ONLY] as String[])
 		seSrc.setPersistence(new ServerPropertyPersistence())
-
+		
+		PluginProperty instLogos = new PluginProperty(SageTVPlugin.CONFIG_BOOL, PROP_INST_LOGOS, 'false', 'Install Channel Logos', 'Set to true to install/update all available channel logos within SageTV.')
+		instLogos.setPersistence(new ServerPropertyPersistence())
+		
 		addProperty(refresh)
 		addProperty(sdUser)
 		addProperty(sdPwd)
 		addProperty(logLvl)
 		addProperty(seSrc)
+		addProperty(instLogos)
 		addProperty(showFilters)
 		addProperty(airFilters)
 		addProperty(showGenerators)

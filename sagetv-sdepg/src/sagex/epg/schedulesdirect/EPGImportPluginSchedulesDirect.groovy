@@ -15,11 +15,11 @@
 */
 package sagex.epg.schedulesdirect
 
-import org.apache.log4j.Level
 import org.apache.log4j.Logger
 import org.schedulesdirect.api.Airing
 import org.schedulesdirect.api.NetworkEpgClient
 import org.schedulesdirect.api.Program
+import org.schedulesdirect.api.Station
 import org.schedulesdirect.api.ZipEpgClient
 import org.schedulesdirect.grabber.Grabber
 
@@ -72,6 +72,7 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 	private boolean airGeneratorsEnabled
 	private boolean chanGeneratorsEnabled
 	private boolean lineupEditorsEnabled
+	private boolean installLogosEnabled
 	private String providerId
 	private String deviceName
 
@@ -158,6 +159,7 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 		chanGeneratorsEnabled = Boolean.parseBoolean(Configuration.GetServerProperty(Plugin.PROP_CHAN_GENERATORS, 'true'))
 		lineupEditorsEnabled = Boolean.parseBoolean(Configuration.GetServerProperty(Plugin.PROP_LINEUP_EDITORS, 'true'))
 		programGeneratorsEnabled = Boolean.parseBoolean(Configuration.GetServerProperty(Plugin.PROP_SHOW_GENERATORS, 'true'))
+		installLogosEnabled = Boolean.parseBoolean(Configuration.GetServerProperty(Plugin.PROP_INST_LOGOS, 'false'))
 		uniqueShows = 0
 		skippedShows = 0
 		reloadedShows = 0
@@ -173,6 +175,16 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 		return true
 	}
 
+	protected void installLogo(Station s) {
+		def ext = s.logo.url.toString()
+		ext = ext.substring(ext.lastIndexOf('.') + 1)
+		try {
+			s.logo.writeImageToFile(new File(new File('ChannelLogos'), "${s.callsign}.$ext"))
+		} catch(Exception e) {
+			LOG.error('IOError', e)
+		}
+	}
+	
 	protected void processAiringGenerators() {
 		if(airGeneratorsEnabled) {
 			if(licResp.isLicensed()) {
@@ -305,7 +317,10 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 			clnt.getHeadendById(providerId).lineups.find { it.device == deviceName }.stations.findAll {
 				def chan = ChannelAPI.GetChannelForStationID(it.id.toInteger())
 				return chan != null && ChannelAPI.IsChannelViewable(chan)
-			}.each { it.airings.each { addProgram(it.program); addAiring(it) } }
+			}.each {
+				it.airings.each { addProgram(it.program); addAiring(it) }
+				if(installLogosEnabled) { installLogo(it) }
+			}
 			LOG.info "Performed EPG data load in ${System.currentTimeMillis() - start}ms"
 		} catch(Exception e) {
 			LOG.error 'Error processing EPG zip data!', e

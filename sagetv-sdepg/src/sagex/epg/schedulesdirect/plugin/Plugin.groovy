@@ -113,12 +113,7 @@ final class Plugin extends AbstractPlugin {
 		}
 	}
 	
-	Plugin(SageTVPluginRegistry registry) {
-		super(registry);
-	}
-	
-	@ButtonClickHandler('sdepg/refresh')
-	public void refreshEpgData() {
+	static void forceEpgRefresh() {
 		Configuration.SetServerProperty(PROP_FORCED_REFRESH, 'true')
 		def epg = new EPGImportPluginSchedulesDirect()
 		if(epg.getProviders().findResult { return forceRefresh(it[1]) })
@@ -128,7 +123,7 @@ final class Plugin extends AbstractPlugin {
 		Global.RemoveUnusedLineups()
 	}
 
-	protected def forceRefresh(String lineupName) {
+	static private def forceRefresh(String lineupName) {
 		def chans = Database.GetChannelsOnLineup(lineupName)
 		if(chans.size() > 0) {
 			for(def i = 0; i < chans.size(); ++i) {
@@ -142,6 +137,15 @@ final class Plugin extends AbstractPlugin {
 			}
 		}
 		return null
+	}
+
+	Plugin(SageTVPluginRegistry registry) {
+		super(registry);
+	}
+	
+	@ButtonClickHandler('sdepg/refresh')
+	void refreshEpgData() {
+		forceEpgRefresh()
 	}
 	
 	@Override

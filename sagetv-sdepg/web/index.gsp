@@ -20,6 +20,7 @@
 	import org.schedulesdirect.api.NetworkEpgClient
 	import org.schedulesdirect.api.exception.ServiceOfflineException
 	import sagex.epg.schedulesdirect.io.EpgDownloader
+	import sagex.epg.schedulesdirect.plugin.Plugin
 	
 	final PLUGIN = PluginAPI.GetInstalledPlugins().find { PluginAPI.GetPluginIdentifier(it) == 'sdepg' }
 	request.setAttribute('plugin', PLUGIN)
@@ -66,7 +67,8 @@
 						out << '<p>ERROR: Passwords do not match!</p>'
 					break
 				case 'addhe':
-					request.getParameterValues('heid').each { id ->
+					def vals = request.getParameterValues('heid')
+					vals.each { id ->
 						try {
 							clnt.addHeadendToAccount(id)
 						} catch(IOException e) {
@@ -74,9 +76,13 @@
 						}
 					}
 					if(!result.size())
-						out << '<p>All selected headends were added successfully!'
+						out << '<p>All selected headends were added successfully!</p>'
 					else
 						result.each { out << "<p>$it</p>" }
+					if(result.size() < vals.size()) {
+						Plugin.forceEpgRefresh()
+						out << '<p>EPG update initiated!</p>'
+					}
 					break
 				case 'rmhe':
 					request.getParameterValues('heid').each { id ->

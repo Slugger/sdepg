@@ -5,15 +5,13 @@
 Native SageTV plugin for accessing EPG data via Schedules Direct.
  
 Please read the user guide for this plugin CAREFULLY prior to installation!  There are special, additional steps required to install and uninstall this plugin.
- 
-Please note that some features of this plugin are disabled without a sagetv-addons license.  This is NOT the same as your SageTV server, client, or PlaceShifter software license.  It is separate and can be obtained from my project web site at http://sagetv-addons.googlecode.com
        </Description>
        <Author>Slugger</Author>
        <CreationDate>2012.10.08</CreationDate>
        <ModificationDate>@@MOD_DATE@@</ModificationDate>
        <Version beta="true">@@VER_NUM@@.@@SAGE_BLD_NUM@@</Version>
        <ResourcePath>plugins/sdepg</ResourcePath>
-       <Webpage>http://sagetv-addons.googlecode.com</Webpage>
+       <Webpage>http://sourceforge.net/projects/sagetv-addons/</Webpage>
        <Webpage>http://www.schedulesdirect.org/</Webpage>
        <ServerOnly>true</ServerOnly>
        <Dependency>

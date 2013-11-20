@@ -51,6 +51,7 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 	static { Class.forName('sagex.epg.schedulesdirect.plugin.Plugin') } // Init the logger only once
 	static private final Logger LOG = Logger.getLogger(EPGImportPluginSchedulesDirect)
 	static final File EPG_SRC = new File(Plugin.RESOURCE_DIR, 'sdjson.epg')
+	static final File LOGOS_ROOT = new File('ChannelLogos')
 	
 	private IEPGDBPublicAdvanced db
 	private Map processedPrograms
@@ -165,6 +166,10 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 		reloadedShows = 0
 		processedPrograms.clear()
 		this.db = db ? new EPGDBPublicAdvancedImpl((sage.z)db) : null
+		if(this.db) {
+			LOGOS_ROOT.deleteDir()
+			LOGOS_ROOT.mkdir()
+		}
 		processProgramGenerators()
 		doUpdate()
 		airingFilter.resetLogger()
@@ -176,12 +181,14 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 	}
 
 	protected void installLogo(Station s) {
-		def ext = s.logo.url.toString()
-		ext = ext.substring(ext.lastIndexOf('.') + 1)
-		try {
-			s.logo.writeImageToFile(new File(new File('ChannelLogos'), "${s.callsign}.$ext"))
-		} catch(Exception e) {
-			LOG.error('IOError', e)
+		if(s.logo) {
+			def ext = s.logo.url.toString()
+			ext = ext.substring(ext.lastIndexOf('.') + 1)
+			try {
+				s.logo.writeImageToFile(new File(LOGOS_ROOT, "${s.callsign}.$ext"))
+			} catch(Exception e) {
+				LOG.error('IOError', e)
+			}
 		}
 	}
 	

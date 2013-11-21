@@ -166,9 +166,10 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 		reloadedShows = 0
 		processedPrograms.clear()
 		this.db = db ? new EPGDBPublicAdvancedImpl((sage.z)db) : null
-		if(this.db) {
+		if(installLogosEnabled && this.db) {
 			LOGOS_ROOT.deleteDir()
 			LOGOS_ROOT.mkdir()
+			LOG.info 'Deleted existing channel logos in SageTV; installing logos from Schedules Direct.'
 		}
 		processProgramGenerators()
 		doUpdate()

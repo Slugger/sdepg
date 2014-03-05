@@ -21,9 +21,9 @@ import sagex.api.UserRecordAPI
  * @author Derek Battams <derek@battams.ca>
  *
  */
-class HeadendMap {
+class LineupMap {
 	static final String USER_RECORD_STORE = 'sdepg'
-	static final String USER_RECORD_KEY = 'headends'
+	static final String USER_RECORD_KEY = 'lineups'
 	
 	static long addId(String id) {
 		def hash = Math.abs(id.hashCode())

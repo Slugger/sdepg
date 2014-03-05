@@ -49,34 +49,17 @@
 					else
 						result.each { out << "<p>$it</p>" }
 					break
-				case 'chpwd':
-					if(params.p0 != PluginAPI.GetPluginConfigValue(PLUGIN, 'sdepg/sdPassword'))
-						out << '<p>ERROR: Old password is wrong!</p>'
-					else if(params.p1 == params.p2) {
-						if(params.p1.size() > 0)
-							try {
-								clnt.changePassword(params.p1)
-								PluginAPI.SetPluginConfigValue(PLUGIN, 'sdepg/sdPassword', params.p1)
-								out << '<p>SUCCESS: Password changed!</p>'
-							} catch(IOException e) {
-								out << "<p>ERROR: $e.message</p>"
-							}
-						else
-							out << '<p>ERROR: Password cannot be blank!</p>'
-					} else
-						out << '<p>ERROR: Passwords do not match!</p>'
-					break
 				case 'addhe':
 					def vals = request.getParameterValues('heid')
 					vals.each { id ->
 						try {
-							clnt.addHeadendToAccount(id)
+							clnt.registerLineup(id)
 						} catch(IOException e) {
 							result << "$id: FAILED [$e.message]"
 						}
 					}
 					if(!result.size())
-						out << '<p>All selected headends were added successfully!</p>'
+						out << '<p>All selected lineups were registered successfully!</p>'
 					else
 						result.each { out << "<p>$it</p>" }
 					if(result.size() < vals.size()) {
@@ -87,13 +70,13 @@
 				case 'rmhe':
 					request.getParameterValues('heid').each { id ->
 						try {
-							clnt.removeHeadendFromAccount(id)
+							clnt.unregisterLineup(id)
 						} catch(IOException e) {
 							result << "$id: FAILED [$e.message]"
 						}
 					}
 					if(!result.size())
-						out << '<p>All selected headends were removed successfully!'
+						out << '<p>All selected lineups were removed successfully!'
 					else
 						result.each { out << "<p>$it</p>" }
 					break
@@ -115,7 +98,6 @@
     <ul>
         <li><a href="/sage/sdjson/index.gsp?m=status">Messages/Status</a></li>
 		<li><a href="/sage/sdjson/index.gsp?m=headends">Configure Lineups</a></li>
-		<li><a href="/sage/sdjson/index.gsp?m=chpwd">Change Password</a></li>
     </ul>
 </div>
 <@ webserver/templates/footer.gsp @>

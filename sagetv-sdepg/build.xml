@@ -22,7 +22,7 @@
 	
   <path id="project.class.path">
   	<pathelement location="${sage.jar}" />
-  	<fileset dir="${sage.libs}" includes="*.jar"/>
+  	<fileset dir="${sage.libs}" includes="*.jar" />
   </path>
 
   <target name="genver" description="Generate version info">

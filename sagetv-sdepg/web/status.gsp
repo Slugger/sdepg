@@ -25,7 +25,7 @@
 	<li><b>Last server EPG update:</b> $clnt.userStatus.lastServerRefresh</li>
 	<li><b>Server status:</b> $clnt.systemStatus.status as of $clnt.systemStatus.statusDate [msg: $clnt.systemStatus.statusMessage]</li>
 	<li><b>Maximum lineups:</b> $clnt.userStatus.maxLineups</li>
-	<li><b>Configured lineups:</b> ${clnt.userStatus.headendInfo.size()}</li>
+	<li><b>Configured lineups:</b> ${clnt.userStatus.lineupInfo.size()}</li>
 </ul>
 <h2>Schedules Direct Messages</h2>
 <% if(!sysMsgs.size() && !usrMsgs.size()) { %>

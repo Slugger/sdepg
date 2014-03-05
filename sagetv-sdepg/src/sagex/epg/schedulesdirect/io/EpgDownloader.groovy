@@ -61,6 +61,7 @@ class EpgDownloader {
 				ignoreList.each { f.append(Integer.toString(ChannelAPI.GetStationID(it)) + IOUtils.LINE_SEPARATOR)}
 			}
 			cmd << '--ignore-stations' << ignoreFile.absolutePath
+			LOG.info "Ignoring ${ignoreList.size()} channels"
 		}
 		def cachePurged = false
 		if(System.currentTimeMillis() - (PluginAPI.GetPluginConfigValue(plugin, Plugin.PROP_CACHE_TTL).toLong() * 86400000L) > Configuration.GetServerProperty(Plugin.PROP_LAST_CACHE_PURGE, '0').toLong()) {

@@ -27,7 +27,7 @@
 			<th>ID</th>
 			<th>Description</th>
 		</tr>
-		<% mub = new groovy.xml.MarkupBuilder(out); clnt.headends.each { he ->
+		<% mub = new groovy.xml.MarkupBuilder(out); clnt.lineups.each { he ->
 			mub.tr {
 				td { input(type:'checkbox', name:'heid', value:he.id, class:'regId') }
 				td he.id

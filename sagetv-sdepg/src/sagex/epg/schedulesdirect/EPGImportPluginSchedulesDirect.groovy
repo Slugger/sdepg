@@ -17,11 +17,12 @@ package sagex.epg.schedulesdirect
 
 import org.apache.log4j.Logger
 import org.schedulesdirect.api.Airing
+import org.schedulesdirect.api.Config
+import org.schedulesdirect.api.EpgClient
 import org.schedulesdirect.api.NetworkEpgClient
 import org.schedulesdirect.api.Program
 import org.schedulesdirect.api.Station
 import org.schedulesdirect.api.ZipEpgClient
-import org.schedulesdirect.grabber.Grabber
 
 import sage.EPGDBPublic
 import sage.EPGImportPlugin
@@ -30,7 +31,7 @@ import sagex.api.ChannelAPI
 import sagex.api.Configuration
 import sagex.api.Global
 import sagex.epg.schedulesdirect.data.Channel
-import sagex.epg.schedulesdirect.data.HeadendMap
+import sagex.epg.schedulesdirect.data.LineupMap
 import sagex.epg.schedulesdirect.data.SageProgram
 import sagex.epg.schedulesdirect.io.EpgDownloader
 import sagex.epg.schedulesdirect.io.filters.AiringFilter
@@ -49,6 +50,13 @@ import com.google.code.sagetvaddons.license.LicenseResponse
 
 class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 	static { Class.forName('sagex.epg.schedulesdirect.plugin.Plugin') } // Init the logger only once
+	// tmp debug measures, remove or config!!
+	static {
+		System.setProperty('sdjson.fs.capture', new File('plugins/sdepg/debug').absolutePath)
+		System.setProperty('sdjson.capture.encode-errors', '1')
+		System.setProperty('sdjson.capture.json-errors', '1')
+		System.setProperty('sdjson.capture.http', '1')
+	}
 	static private final Logger LOG = Logger.getLogger(EPGImportPluginSchedulesDirect)
 	static final File EPG_SRC = new File(Plugin.RESOURCE_DIR, 'sdjson.epg')
 	static final File LOGOS_ROOT = new File('ChannelLogos')
@@ -75,7 +83,7 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 	private boolean lineupEditorsEnabled
 	private boolean installLogosEnabled
 	private String providerId
-	private String deviceName
+	private String lineupType
 
 	public EPGImportPluginSchedulesDirect() {
 		db = null
@@ -97,6 +105,7 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 	public String[][] getProviders(String zipCode) {
 		def sdId = Configuration.GetServerProperty(Plugin.PROP_SD_USER, '')
 		def sdPwd = Configuration.GetServerProperty(Plugin.PROP_SD_PWD, '')
+		def url = Configuration.GetServerProperty(Plugin.PROP_SDJSON_URL, Config.DEFAULT_BASE_URL)
 		licResp = License.isLicensed(Plugin.PLUGIN_ID)		
 		def providers = []
 		def clnt = null
@@ -109,17 +118,15 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 				}
 			}
 			if(!clnt)
-				clnt = new NetworkEpgClient(sdId, sdPwd, EpgDownloader.generateUserAgent())
+				clnt = new NetworkEpgClient(sdId, sdPwd, EpgDownloader.generateUserAgent(), url, false)
 				
 			/*
-			 *  NOTE: Ignore the zipCode arg; sd4j will just pull headends configured in
+			 *  NOTE: Ignore the zipCode arg; sdjson will just pull headends configured in
 			 *  the user's SD account, which is exactly what is needed.
 			 */
-			clnt.getHeadends().each { he ->
-				he.lineups.each {
-					def hash = HeadendMap.addId("$he.id:$it.device")
-					providers.add([hash.toString(), "$he.name $he.location (${it.device != 'X' ? it.device : 'Digital'})"])
-				}
+			clnt.getLineups().each {
+				def hash = LineupMap.addId("$it.id:$it.type")
+				providers.add([hash.toString(), "$it.name $it.location (${it.type})"])
 			}
 		} catch(Exception e) {
 			LOG.error('Error accessing Schedules Direct', e)
@@ -145,11 +152,15 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 	@Override
 	public boolean updateGuide(String providerId, EPGDBPublic db) {
 		LOG.debug "updateGuide() called for '$providerId'"
-		this.providerId = HeadendMap.getId(providerId.toLong())
-		def devIndex = this.providerId.lastIndexOf(':')
-		this.deviceName = this.providerId.substring(devIndex + 1)
-		this.providerId = this.providerId.substring(0, devIndex)
-		LOG.debug "Mapped $providerId to ${this.providerId}; dev=$deviceName"
+		this.providerId = LineupMap.getId(providerId.toLong())
+		if(!this.providerId) {
+			LOG.error "Provider id is unknown, you need to reconfigure your input sources! [$providerId]"
+			return true
+		}
+		def typeIndex = this.providerId.lastIndexOf(':')
+		this.lineupType = this.providerId.substring(typeIndex + 1)
+		this.providerId = this.providerId.substring(0, typeIndex)
+		LOG.debug "Mapped $providerId to ${this.providerId}; type=$lineupType"
 		licResp = License.isLicensed(Plugin.PLUGIN_ID)
 		licWarnLogged = false
 		showFilterDisabledLogged = false
@@ -322,7 +333,7 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 		def clnt = null
 		try {
 			clnt = new ZipEpgClient(EPG_SRC)
-			clnt.getHeadendById(providerId).lineups.find { it.device == deviceName }.stations.findAll {
+			clnt.getLineupByUriPath(EpgClient.getUriPathForLineupId(providerId)).stations.findAll {
 				def chan = ChannelAPI.GetChannelForStationID(it.id.toInteger())
 				return chan != null && ChannelAPI.IsChannelViewable(chan)
 			}.each {
@@ -413,7 +424,7 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 	}
 	
 	private boolean setLineupMap() {
-		def lineupDir = Grabber.scrubFileName("$providerId:$deviceName")
+		def lineupDir = ZipEpgClient.scrubFileName("$providerId:$lineupType")
 		def root = new File("${Plugin.RESOURCE_DIR}/lineup_editors/$lineupDir")
 		if(!root.exists() && !root.mkdirs()) {
 			LOG.error "Unable to create lineup editor directory! [$root.absolutePath]"
@@ -423,9 +434,9 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 		def clnt = null
 		try {
 			clnt = new ZipEpgClient(EPG_SRC)
-			map = clnt.getHeadendById(providerId).lineups.find { it.device == deviceName }.stationMap
+			map = clnt.getLineupByUriPath(EpgClient.getUriPathForLineupId(providerId)).stationMap
 		} catch(Exception e) {
-			LOG.error 'sd4j error!', e
+			LOG.error 'sdjson error!', e
 		} finally {
 			if(clnt) try { clnt.close() } catch(IOException e) {}
 		}
@@ -443,24 +454,24 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 				LOG.warn "Lineup editors ignored: ${licResp.getMessage()}"
 		} else
 			LOG.warn 'Lineup editors ignored because they are disabled!'
-		if(db) db.setLineup HeadendMap.addId("$providerId:$deviceName"), sageMap
-		if(LOG.isDebugEnabled()) LOG.debug "Lineup '$providerId:$deviceName' created: $sageMap"
+		if(db) db.setLineup LineupMap.addId("$providerId:$lineupType"), sageMap
+		if(LOG.isDebugEnabled()) LOG.debug "Lineup '$providerId:$lineupType' created: $sageMap"
 		return true
 	}
 
 	private boolean setPhysicalLineupMap() {
-		def lineupDir = Grabber.scrubFileName("$providerId:$deviceName")
+		def lineupDir = ZipEpgClient.scrubFileName("$providerId:$lineupType")
 		def root = new File("${Plugin.RESOURCE_DIR}/lineup_editors/$lineupDir")
 		def map = [:]
 		def clnt = null
 		try {
 			clnt = new ZipEpgClient(EPG_SRC)
-			def lineup = clnt.getHeadendById(providerId).lineups.find { it.device == deviceName }
+			def lineup = clnt.getLineupByUriPath(EpgClient.getUriPathForLineupId(providerId))
 			if(!lineup.hasPhysicalMapping()) {
-				LOG.debug "There is no physical mapping to process for this lineup! [$providerId:$deviceName]"
+				LOG.debug "There is no physical mapping to process for this lineup! [$providerId:$lineupType]"
 				return true
 			}
-			LOG.debug "Processing physical mapping for lineup $providerId:$deviceName"
+			LOG.debug "Processing physical mapping for lineup $providerId:$lineupType"
 			map = lineup.physicalStationMap
 		} catch(Exception e) {
 			LOG.error 'sd4j error!', e
@@ -481,8 +492,8 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 				LOG.warn "Lineup editors ignored: ${licResp.getMessage()}"
 		} else
 			LOG.warn 'Lineup editors ignored because they are disabled!'
-		if(db) db.setPhysicalLineup HeadendMap.addId("$providerId:$deviceName"), sageMap
-		if(LOG.isDebugEnabled()) LOG.debug "Lineup '$providerId:$deviceName' created: $sageMap"
+		if(db) db.setPhysicalLineup LineupMap.addId("$providerId:$lineupType"), sageMap
+		if(LOG.isDebugEnabled()) LOG.debug "Lineup '$providerId:$lineupType' created: $sageMap"
 		return true
 	}
 
@@ -492,7 +503,7 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 		def clnt = null
 		try {
 			clnt = new ZipEpgClient(EPG_SRC)
-			clnt.getHeadendById(providerId).lineups.each {
+			[clnt.getLineupByUriPath(EpgClient.getUriPathForLineupId(providerId))].each {
 				it.stations.each {
 					def chanId = it.id
 					def callsign = it.callsign
@@ -509,7 +520,7 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 				}
 			}
 		} catch(Exception e) {
-			LOG.error 'sd4j error', e
+			LOG.error 'sdjson error', e
 			rc = false
 		} finally {
 			if(clnt) try { clnt.close() } catch(IOException e) {}

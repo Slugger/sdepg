@@ -63,6 +63,7 @@ final class Plugin extends AbstractPlugin {
 	static final String PROP_FORCED_REFRESH = "${PROP_PREFIX}/forcedRefresh"
 	static final String PROP_SE_SRC = "${PROP_PREFIX}/seSource2"
 	static final String PROP_INST_LOGOS = "${PROP_PREFIX}/installLogos"
+	static final String PROP_SDJSON_CAP = "${PROP_PREFIX}/sdjsonCapture"
 	
 	static final String OPT_SE_SRC_TRIBUNE_PREF = 'Tribune (preferred)'
 	static final String OPT_SE_SRC_TRIBUNE_ONLY = 'Tribune (only)'
@@ -142,6 +143,8 @@ final class Plugin extends AbstractPlugin {
 
 	Plugin(SageTVPluginRegistry registry) {
 		super(registry);
+		def captureRoot = new File('plugins/sdepg/capture')
+		System.setProperty('sdjson.fs.capture', new File(captureRoot, 'plugin').absolutePath)
 	}
 	
 	@ButtonClickHandler('sdepg/refresh')
@@ -231,10 +234,14 @@ final class Plugin extends AbstractPlugin {
 		PluginProperty instLogos = new PluginProperty(SageTVPlugin.CONFIG_BOOL, PROP_INST_LOGOS, 'false', 'Install Channel Logos', 'Set to true to install/update all available channel logos within SageTV.')
 		instLogos.setPersistence(new ServerPropertyPersistence())
 		
+		PluginProperty sdjsonCap = new PluginProperty(SageTVPlugin.CONFIG_CHOICE, PROP_SDJSON_CAP, 'OFF', 'Capture sdjson Data', 'Select the type(s) of sdjson data to capture.', ['OFF', 'JSON', 'HTTP', 'ALL'] as String[])
+		sdjsonCap.setPersistence(new ServerPropertyPersistence())
+		
 		addProperty(refresh)
 		addProperty(sdUser)
 		addProperty(sdPwd)
 		addProperty(logLvl)
+		addProperty(sdjsonCap)
 		addProperty(seSrc)
 		addProperty(instLogos)
 		addProperty(showFilters)
@@ -255,5 +262,24 @@ final class Plugin extends AbstractPlugin {
 	@ConfigValueChangeHandler('sdepg/logLevel')
 	void updateInternalLogger() {
 		InternalLogger.init()
+	}
+	
+	@ConfigValueChangeHandler('sdepg/sdjsonCapture')
+	void updateSdjsonCaptureSettings() {
+		def capSetting = Configuration.GetServerProperty(Plugin.PROP_SDJSON_CAP, 'OFF')
+		if(capSetting == 'JSON' || capSetting == 'ALL') {
+			System.setProperty('sdjson.capture.encode-errors', '1')
+			System.setProperty('sdjson.capture.json-errors', '1')
+		} else {
+			System.clearProperty('sdjson.capture.encode-errors')
+			System.clearProperty('sdjson.capture.json-errors')
+		}
+		if(capSetting == 'HTTP' || capSetting == 'ALL') {
+			System.setProperty('sdjson.capture.http', '1')
+			System.setProperty('sdjson.capture.http.content', '1')
+		} else {
+			System.clearProperty('sdjson.capture.http')
+			System.clearProperty('sdjson.capture.http.content')
+		}
 	}
 }

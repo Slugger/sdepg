@@ -1,5 +1,5 @@
 /*
-*      Copyright 2012-2013 Battams, Derek
+*      Copyright 2012-2014 Battams, Derek
 *
 *       Licensed under the Apache License, Version 2.0 (the "License");
 *       you may not use this file except in compliance with the License.
@@ -50,13 +50,6 @@ import com.google.code.sagetvaddons.license.LicenseResponse
 
 class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 	static { Class.forName('sagex.epg.schedulesdirect.plugin.Plugin') } // Init the logger only once
-	// tmp debug measures, remove or config!!
-	static {
-		System.setProperty('sdjson.fs.capture', new File('plugins/sdepg/debug').absolutePath)
-		System.setProperty('sdjson.capture.encode-errors', '1')
-		System.setProperty('sdjson.capture.json-errors', '1')
-		System.setProperty('sdjson.capture.http', '1')
-	}
 	static private final Logger LOG = Logger.getLogger(EPGImportPluginSchedulesDirect)
 	static final File EPG_SRC = new File(Plugin.RESOURCE_DIR, 'sdjson.epg')
 	static final File LOGOS_ROOT = new File('ChannelLogos')
@@ -293,7 +286,7 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 
 	protected String getLanguage(SageProgram sProg) {
 		def lang = sProg.descriptionLanguage
-		if(lang == null || lang.length() == 0 || lang.toLowerCase() == 'english')
+		if(!lang || lang.toLowerCase() == 'en' || lang.toLowerCase() == 'english')
 			return null
 		else
 			return lang

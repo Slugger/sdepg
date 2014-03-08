@@ -1,5 +1,5 @@
 /*
-*      Copyright 2011-2013 Battams, Derek
+*      Copyright 2011-2014 Battams, Derek
 *
 *       Licensed under the Apache License, Version 2.0 (the "License");
 *       you may not use this file except in compliance with the License.
@@ -46,7 +46,13 @@ class EpgDownloader {
 			targetDir.mkdirs()
 		def targetFile = EPGImportPluginSchedulesDirect.EPG_SRC
 		def plugin = PluginAPI.GetInstalledPlugins().find { PluginAPI.GetPluginIdentifier(it) == 'sdepg' }
-		def cmd = [new File("${System.getProperty('java.home')}/bin/java").absolutePath, "-Xmx${PluginAPI.GetPluginConfigValue(plugin, Plugin.PROP_GRABBER_HEAP)}m", '-jar', new File("${Plugin.RESOURCE_DIR}/tools/sdjson.jar").absolutePath]
+		def cmd = [new File("${System.getProperty('java.home')}/bin/java").absolutePath, "-Xmx${PluginAPI.GetPluginConfigValue(plugin, Plugin.PROP_GRABBER_HEAP)}m", "-Dsdjson.fs.capture=${new File('plugins/sdepg/capture/grabber').absolutePath}"]
+		def capSettings = PluginAPI.GetPluginConfigValue(plugin, Plugin.PROP_SDJSON_CAP)
+		if(capSettings == 'JSON' || capSettings == 'ALL')
+			cmd << '-Dsdjson.capture.json-errors' << '-Dsdjson.capture.encode-errors'
+		if(capSettings == 'HTTP' || capSettings == 'ALL')
+			cmd << '-Dsdjson.capture.http' << '-Dsdjson.capture.http.content'
+		cmd << '-jar' << new File("${Plugin.RESOURCE_DIR}/tools/sdjson.jar").absolutePath
 		cmd << '--username' << id << '--password' << pwd << '--user-agent' << generateUserAgent() << '--max-threads' << PluginAPI.GetPluginConfigValue(plugin, Plugin.PROP_SDJSON_THREADS)
 		cmd << '--url' << PluginAPI.GetPluginConfigValue(plugin, Plugin.PROP_SDJSON_URL)
 		cmd << '--grabber-log-level' << PluginAPI.GetPluginConfigValue(plugin, Plugin.PROP_GRABBER_LOG_LVL)

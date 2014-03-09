@@ -19,6 +19,7 @@ import org.apache.log4j.Logger
 import org.schedulesdirect.api.Airing
 import org.schedulesdirect.api.Config
 import org.schedulesdirect.api.EpgClient
+import org.schedulesdirect.api.Lineup
 import org.schedulesdirect.api.NetworkEpgClient
 import org.schedulesdirect.api.Program
 import org.schedulesdirect.api.Station
@@ -77,6 +78,7 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 	private boolean installLogosEnabled
 	private String providerId
 	private String lineupType
+	private String providerName
 
 	public EPGImportPluginSchedulesDirect() {
 		db = null
@@ -119,7 +121,7 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 			 */
 			clnt.getLineups().each {
 				def hash = LineupMap.addId("$it.id:$it.type")
-				providers.add([hash.toString(), "$it.name $it.location (${it.type})"])
+				providers.add([hash.toString(), getDisplayNameForLineup(it)])
 			}
 		} catch(Exception e) {
 			LOG.error('Error accessing Schedules Direct', e)
@@ -142,6 +144,36 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 		return providers
 	}
 
+	protected String findProviderName(def id) {
+		def sdId = Configuration.GetServerProperty(Plugin.PROP_SD_USER, '')
+		def sdPwd = Configuration.GetServerProperty(Plugin.PROP_SD_PWD, '')
+		def url = Configuration.GetServerProperty(Plugin.PROP_SDJSON_URL, Config.DEFAULT_BASE_URL)
+		def clnt = null
+		try {
+			if(EPG_SRC.exists()) {
+				try {
+					clnt = new ZipEpgClient(EPG_SRC)
+				} catch(IOException e) {
+					LOG.warn 'Invalid zip file detected; ignoring it!', e
+				}
+			}
+			if(!clnt)
+				clnt = new NetworkEpgClient(sdId, sdPwd, EpgDownloader.generateUserAgent(), url, false)
+			def lineup = clnt.lineups.find { it.id == id }
+			return lineup ? getDisplayNameForLineup(lineup) : null
+		} catch(Exception e) {
+			LOG.error('Error accessing Schedules Direct', e)
+			return null
+		} finally {
+			if(clnt)
+				try { clnt.close() } catch(IOException e) {}
+		}
+	}
+	
+	protected String getDisplayNameForLineup(Lineup lineup) {
+		return "$lineup.name $lineup.location ($lineup.type)"
+	}
+	
 	@Override
 	public boolean updateGuide(String providerId, EPGDBPublic db) {
 		LOG.debug "updateGuide() called for '$providerId'"
@@ -154,6 +186,7 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 		this.lineupType = this.providerId.substring(typeIndex + 1)
 		this.providerId = this.providerId.substring(0, typeIndex)
 		LOG.debug "Mapped $providerId to ${this.providerId}; type=$lineupType"
+		providerName = findProviderName(this.providerId)
 		licResp = License.isLicensed(Plugin.PLUGIN_ID)
 		licWarnLogged = false
 		showFilterDisabledLogged = false
@@ -305,7 +338,7 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 		def sdPwd = Configuration.GetServerProperty(Plugin.PROP_SD_PWD, '')
 		try {
 			if(db)
-				new EpgDownloader(sdId, sdPwd).download()
+				new EpgDownloader(sdId, sdPwd, providerName).download()
 		} catch(IOException e) {
 			LOG.error 'Download of EPG data failed!', e
 			Global.DebugLog('EPG update failed: Download of data from sd4j failed!  See plugin logs for details.')
@@ -328,10 +361,11 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 			clnt = new ZipEpgClient(EPG_SRC)
 			clnt.getLineupByUriPath(EpgClient.getUriPathForLineupId(providerId)).stations.findAll {
 				def chan = ChannelAPI.GetChannelForStationID(it.id.toInteger())
-				return chan != null && ChannelAPI.IsChannelViewable(chan)
+				return chan != null && ChannelAPI.IsChannelViewableOnLineup(chan, providerName)
 			}.each {
 				it.airings.each { addProgram(it.program); addAiring(it) }
-				if(installLogosEnabled) { installLogo(it) }
+				if(installLogosEnabled)
+					installLogo(it)
 			}
 			LOG.info "Performed EPG data load in ${System.currentTimeMillis() - start}ms"
 		} catch(Exception e) {

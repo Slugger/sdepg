@@ -34,10 +34,13 @@ class EpgDownloader {
 	
 	private def id
 	private def pwd
+	private def lineupName
 	
-	EpgDownloader(def id, def pwd) {
+	EpgDownloader(def id, def pwd, def lineupName) {
 		this.id = id
 		this.pwd = pwd
+		this.lineupName = lineupName
+		LOG.info "Downloading EPG data for lineup: '$lineupName'"
 	}
 		
 	void download() throws IOException {
@@ -59,16 +62,14 @@ class EpgDownloader {
 		cmd << 'grab' << '--target' << targetFile.absolutePath
 		cmd << '--max-prog-chunk' << PluginAPI.GetPluginConfigValue(plugin, Plugin.PROP_SDJSON_PROG_CHUNK)
 		cmd << '--max-sched-chunk' << PluginAPI.GetPluginConfigValue(plugin, Plugin.PROP_SDJSON_SCHED_CHUNK)
-		def ignoreFile = new File(targetDir, 'ignore.txt')
-		ignoreFile.delete()
-		def ignoreList = ChannelAPI.GetAllChannels().findAll { !ChannelAPI.IsChannelViewable(it) }
-		if(ignoreList.size() > 0) {
-			ignoreFile.withWriterAppend('UTF-8') { f ->
-				ignoreList.each { f.append(Integer.toString(ChannelAPI.GetStationID(it)) + IOUtils.LINE_SEPARATOR)}
-			}
-			cmd << '--ignore-stations' << ignoreFile.absolutePath
-			LOG.info "Ignoring ${ignoreList.size()} channels"
+		def stationFile = new File(targetDir, 'stations.txt')
+		stationFile.delete()
+		def stationList = ChannelAPI.GetAllChannels().findAll { ChannelAPI.IsChannelViewableOnLineup(it, lineupName) }
+		stationFile.withWriterAppend('UTF-8') { f ->
+			stationList.each { f.append(Integer.toString(ChannelAPI.GetStationID(it)) + IOUtils.LINE_SEPARATOR)}
 		}
+		cmd << '--stations' << stationFile.absolutePath
+		LOG.info "Requesting ${stationList.size()} channels"
 		def cachePurged = false
 		if(System.currentTimeMillis() - (PluginAPI.GetPluginConfigValue(plugin, Plugin.PROP_CACHE_TTL).toLong() * 86400000L) > Configuration.GetServerProperty(Plugin.PROP_LAST_CACHE_PURGE, '0').toLong()) {
 			cmd << '--purge-cache'
@@ -97,6 +98,5 @@ class EpgDownloader {
 				LOG.debug("stderr:\n$stderr")
 			}
 		}
-		ignoreFile.delete()
 	}
 }

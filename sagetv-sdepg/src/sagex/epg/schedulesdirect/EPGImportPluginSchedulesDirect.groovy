@@ -306,7 +306,7 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 		sProg.subcategories.each { catList << it }
 		if(db && !db.addShowPublic2(sProg.title, sProg.episodeTitle, sProg.description, 0L,
 			catList as String[], sProg.sageCredits.getNames() as String[],
-			sProg.sageCredits.getRoles() as byte[], sProg.mpaaRating != Program.MPAARating.NONE ? sProg.mpaaRating.toString() : null, sProg.advisories,
+			sProg.sageCredits.getRoles() as byte[], getContentRating(sProg), sProg.advisories,
 			sProg.year > 0 ? sProg.year.toString() : null, null, getBonusDetails(sProg), sProg.id, getLanguage(sProg),
 			sProg.originalAirDate ? sProg.originalAirDate.getTime() : 0L, sProg.seasonNum as short,
 			sProg.episodeNum as short, sProg.forceUnique)) {
@@ -317,6 +317,10 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 		return sProg
 	}
 
+	protected String getContentRating(SageProgram sProg) {
+		return sProg.ratings.find { it.body == 'Motion Picture Association of America' }?.rating
+	}
+	
 	protected String getLanguage(SageProgram sProg) {
 		def lang = sProg.descriptionLanguage
 		if(!lang || lang.toLowerCase() == 'en' || lang.toLowerCase() == 'english')
@@ -410,9 +414,13 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 			prog.descriptionLanguage = lang
 			addProgram(prog, true)
 		}
-		return db && !db.addAiringPublic2(air.id, air.station.id.toInteger(), air.gmtStart.time, 1000L * air.duration, getPartsByte(air.partNum, air.totalParts), getMiscInt(air), air.tvRating != Airing.TvRating.NONE ? air.tvRating.toString() : null)
+		return db && !db.addAiringPublic2(air.id, air.station.id.toInteger(), air.gmtStart.time, 1000L * air.duration, getPartsByte(air.partNum, air.totalParts), getMiscInt(air), getTvRating(air))
 	}
 
+	private String getTvRating(Airing a) {
+		return a.tvRatings.find { it.body == 'USA Parental Rating' }?.rating
+	}
+	
 	private boolean isShowFirstRun(Program p, Airing a) {
 		return a.gmtStart.time <= (p.originalAirDate ? p.originalAirDate.getTime() : 0L) + (21L * 86400000L)
 	}

@@ -39,8 +39,6 @@ public class SageProgram {
 	static private final Set UNHANDLED_ROLES = Collections.synchronizedSet(new HashSet())
 	
 	private Program __src
-	private String category
-	private List subcategories
 	private SageCreditList sageCredits
 	private boolean forceUnique
 	private int seasonNum
@@ -51,13 +49,8 @@ public class SageProgram {
 	 */
 	public SageProgram(Program src) {
 		this.__src = src
-		if(src.id.startsWith('MV')) {
-			category = 'Movie'
-			subcategories = src.genres as List
-			subcategories.remove category
-		} else
-			category = findCategory()
-		sageCredits = new SageCreditList()	
+		sageCredits = new SageCreditList()
+		def category = src.genres ? src.genres[0] : ''
 		if((src.id.startsWith('SP') || category.toLowerCase() == 'sports event') && src.episodeTitle =~ TEAM_REGEX) {
 			def m = src.episodeTitle =~ TEAM_REGEX
 			sageCredits.add(getCredit('TEAM', m[0][1]))
@@ -141,58 +134,7 @@ public class SageProgram {
 		if(!found)
 			__src."$name" = val
 	}
-	
-	protected String findCategory() {
-		def lvl1 = null
-		def lvl2 = null
-		def lvl3 = null
-		def lvl4 = null
-		def catList = __src.genres as List
-		def itr = catList.iterator()
-		while(itr.hasNext()) {
-			def s = itr.next()
-			if(s == 'Movie')
-				lvl1 = s
-			else if(lvl1 == null && s ==~ /Sports|News|Sports .*event/)
-				lvl2 = s
-			else if(lvl1 == null && s ==~ /Travel|Weather|Soap Opera|Science|Paid Programming|Religious|Miniseries|Game Show|Health|Reality|Talk Show|Awards.*|Business|Children|Cooking|Educational|Special|Documentary/)
-				lvl3 = s
-			else if(lvl1 == null && s ==~ /Science Fiction|Romance|Comedy|Drama|Action.*|Horror|Mystery|Western|Suspense|Fantasy/)
-				lvl4 = s
-			else if(s ==~ /Movies|Episodic|Series|Other/)
-				itr.remove()
-		}
 
-		def cat
-		if(lvl1)
-			cat = lvl1
-		else if(lvl2)
-			cat = lvl2
-		else if(lvl3)
-			cat = lvl3
-		else if(lvl4)
-			cat = lvl4
-		else if(__src.genres.size() > 0)
-			cat = __src.genres[0]
-		else
-			cat = 'Other'
-
-		if(cat == 'News') {
-			def match = catList.findResult(null) {
-				if(it =~ /Reality|Action.*|Comedy|Drama/)
-					return it
-				return null
-			}
-			if(match != null) {
-				cat = match
-				catList.remove 'News'
-			}
-		}
-		subcategories = catList
-		subcategories.remove cat		
-		return cat
-	}
-	
 	protected SageCredit getCredit(def type, def name) {
 		def role
 		switch(type.toLowerCase()) {

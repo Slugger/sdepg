@@ -302,10 +302,8 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 			showFilterDisabledLogged = true
 		}
 		
-		def catList = [sProg.category]
-		sProg.subcategories.each { catList << it }
 		if(db && !db.addShowPublic2(sProg.title, sProg.episodeTitle, sProg.description, 0L,
-			catList as String[], sProg.sageCredits.getNames() as String[],
+			sProg.genres, sProg.sageCredits.getNames() as String[],
 			sProg.sageCredits.getRoles() as byte[], getContentRating(sProg), sProg.advisories,
 			sProg.year > 0 ? sProg.year.toString() : null, null, getBonusDetails(sProg), sProg.id, getLanguage(sProg),
 			sProg.originalAirDate ? sProg.originalAirDate.getTime() : 0L, sProg.seasonNum as short,

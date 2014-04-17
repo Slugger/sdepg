@@ -1,5 +1,5 @@
 /*
- *      Copyright 2011-2012 Battams, Derek
+ *      Copyright 2011-2014 Battams, Derek
  *
  *       Licensed under the Apache License, Version 2.0 (the "License");
  *       you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ class InternalLogger {
 			a = new RollingFileAppender(p, new File(Plugin.RESOURCE_DIR, 'logs/sdepg.log').getAbsolutePath())
 			a.name = 'sdepg'
 			a.maxBackupIndex = 2
-			a.maxFileSize = '25MB'
+			a.maxFileSize = '2MB'
 			log.addAppender(a)
 		}
 		log.level = Level.toLevel(logLevel)
@@ -45,10 +45,10 @@ class InternalLogger {
 		def a = log.getAppender('sd4j')
 		if(!a) {
 			def p = new PatternLayout('%d %-5p [%c{1}]: %m%n')
-			a = new RollingFileAppender(p, new File(Plugin.RESOURCE_DIR, 'logs/sd4j-api.log').getAbsolutePath())
-			a.name = 'sd4j'
+			a = new RollingFileAppender(p, new File(Plugin.RESOURCE_DIR, 'logs/sdjson-api.log').getAbsolutePath())
+			a.name = 'sdjson'
 			a.maxBackupIndex = 2
-			a.maxFileSize = '25MB'
+			a.maxFileSize = '2MB'
 			log.addAppender(a)
 		}
 		log.level = Level.toLevel(logLevel)

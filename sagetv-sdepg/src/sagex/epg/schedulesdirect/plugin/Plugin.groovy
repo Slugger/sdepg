@@ -1,5 +1,5 @@
 /*
-*      Copyright 2011-2013 Battams, Derek
+*      Copyright 2011-2014 Battams, Derek
 *
 *       Licensed under the Apache License, Version 2.0 (the "License");
 *       you may not use this file except in compliance with the License.
@@ -145,6 +145,7 @@ final class Plugin extends AbstractPlugin {
 		super(registry);
 		def captureRoot = new File('plugins/sdepg/capture')
 		System.setProperty('sdjson.fs.capture', new File(captureRoot, 'plugin').absolutePath)
+		updateSdjsonCaptureSettings()
 	}
 	
 	@ButtonClickHandler('sdepg/refresh')
@@ -261,7 +262,7 @@ final class Plugin extends AbstractPlugin {
 	
 	@ConfigValueChangeHandler('sdepg/logLevel')
 	void updateInternalLogger() {
-		InternalLogger.init()
+		InternalLogger.init(Configuration.GetServerProperty(PROP_LOG_LEVEL, 'INFO'))
 	}
 	
 	@ConfigValueChangeHandler('sdepg/sdjsonCapture')

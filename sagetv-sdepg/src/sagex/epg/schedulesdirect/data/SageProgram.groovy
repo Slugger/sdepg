@@ -1,5 +1,5 @@
 /*
-*      Copyright 2012-2013 Battams, Derek
+*      Copyright 2012-2014 Battams, Derek
 *
 *       Licensed under the Apache License, Version 2.0 (the "License");
 *       you may not use this file except in compliance with the License.
@@ -32,10 +32,6 @@ import sagex.epg.schedulesdirect.sagetv.helpers.IEPGDBPublicAdvanced
  */
 public class SageProgram {
 	static private final Logger LOG = Logger.getLogger(SageProgram)
-	static private final String TEAM_REGEX_STR = '[A-Z][\\w\\s-&\'\\.\\(\\)\\d]+';
-	static private final String EVENT_REGEX_STR = "(${TEAM_REGEX_STR}) (?:at|vs\\.{0,1}|\u00E0|contre|c\\.) (${TEAM_REGEX_STR})";
-	static private final Pattern TEAM_REGEX = Pattern.compile(EVENT_REGEX_STR)
-
 	static private final Set UNHANDLED_ROLES = Collections.synchronizedSet(new HashSet())
 	
 	private Program __src
@@ -51,11 +47,7 @@ public class SageProgram {
 		this.__src = src
 		sageCredits = new SageCreditList()
 		def category = src.genres ? src.genres[0] : ''
-		if((src.id.startsWith('SP') || category.toLowerCase() == 'sports event') && src.episodeTitle =~ TEAM_REGEX) {
-			def m = src.episodeTitle =~ TEAM_REGEX
-			sageCredits.add(getCredit('TEAM', m[0][1]))
-			sageCredits.add(getCredit('TEAM', m[0][2]))
-		}
+		src.teams.each { sageCredits.add(getCredit('TEAM', it.name)) }
 		forceUnique = false
 		src.credits.each { sageCredits.add(getCredit(it.role.toString(), it.name)) }
 		checkForSENumbers()
@@ -154,6 +146,7 @@ public class SageProgram {
 			case 'musical_guest': role = IEPGDBPublicAdvanced.MUSICAL_GUEST_ROLE; break
 			case 'correspondent': role = IEPGDBPublicAdvanced.CORRESPONDENT_ROLE; break
 			case 'team': role = IEPGDBPublicAdvanced.TEAM_ROLE; break
+			case 'voice': role = IEPGDBPublicAdvanced.VOICE_ROLE; break
 			default:
 				role = EPGDBPublic.ACTOR_ROLE
 				name = "$name (${type.capitalize()})"

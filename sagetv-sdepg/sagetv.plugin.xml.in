@@ -3,8 +3,14 @@
        <Identifier>sdepg</Identifier>
        <Description>
 Native SageTV plugin for accessing EPG data via Schedules Direct.
- 
-Please read the user guide for this plugin CAREFULLY prior to installation!  There are special, additional steps required to install and uninstall this plugin.
+  
+Please read the user guide for this plugin CAREFULLY prior to installation!
+There are special, additional steps required to install and uninstall this
+plugin.
+  
+If you are upgrading from version 0.0.5.x or older then you MUST follow
+the additional upgrade instructions outlined at http://bit.ly/1k5G6f9 otherwise
+your EPG data will slowly disappear.
        </Description>
        <Author>Slugger</Author>
        <CreationDate>2012.10.08</CreationDate>

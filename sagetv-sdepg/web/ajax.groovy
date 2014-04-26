@@ -1,5 +1,5 @@
 /*
- *      Copyright 2013 Battams, Derek
+ *      Copyright 2013-2014 Battams, Derek
  *
  *       Licensed under the Apache License, Version 2.0 (the "License");
  *       you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ switch(params.c) {
 		def html = new groovy.xml.MarkupBuilder(out)
 		clnt.getLineups(params.i, params.z).each { he ->
 			html.tr {
-				td { input(type:'checkbox', name:'heid', value:he.id, class:'newId') }
+				td { input(type:'checkbox', name:'heid', value:"lineups/$he.id", class:'newId') }
 				td he.id
 				td "$he.name $he.location"
 			}

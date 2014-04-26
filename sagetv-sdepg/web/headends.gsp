@@ -1,6 +1,6 @@
 <%
 /*
- *      Copyright 2013 Battams, Derek
+ *      Copyright 2013-2014 Battams, Derek
  *       
  *       Licensed under the Apache License, Version 2.0 (the "License");
  *       you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@
 		</tr>
 		<% mub = new groovy.xml.MarkupBuilder(out); clnt.lineups.each { he ->
 			mub.tr {
-				td { input(type:'checkbox', name:'heid', value:he.id, class:'regId') }
+				td { input(type:'checkbox', name:'heid', value:"lineups/$he.id", class:'regId') }
 				td he.id
 				td "$he.name $he.location"
 			}

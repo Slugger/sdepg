@@ -2,7 +2,7 @@
 <div id="airdetailedinfo">
 <%
 /*
- *      Copyright 2013 Battams, Derek
+ *      Copyright 2013-2014 Battams, Derek
  *       
  *       Licensed under the Apache License, Version 2.0 (the "License");
  *       you may not use this file except in compliance with the License.
@@ -70,7 +70,7 @@
 				case 'rmhe':
 					request.getParameterValues('heid').each { id ->
 						try {
-							clnt.unregisterLineup(id)
+							clnt.unregisterLineup(clnt.getLineupByUriPath(id))
 						} catch(IOException e) {
 							result << "$id: FAILED [$e.message]"
 						}

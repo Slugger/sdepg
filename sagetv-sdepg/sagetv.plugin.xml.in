@@ -11,6 +11,10 @@ plugin.
 If you are upgrading from version 0.0.5.x or older then you MUST follow
 the additional upgrade instructions outlined at http://bit.ly/1k5G6f9 otherwise
 your EPG data will slowly disappear.
+ 
+If you are upgrading from 0.0.6.x to 0.0.6.y (where y > x) then you do not need
+to do anything special.  Just apply the updated plugin from the plugin manager
+and restart SageTV.
        </Description>
        <Author>Slugger</Author>
        <CreationDate>2012.10.08</CreationDate>

@@ -1,5 +1,5 @@
 /*
- *      Copyright 2012-2013 Battams, Derek
+ *      Copyright 2012-2014 Battams, Derek
  *
  *       Licensed under the Apache License, Version 2.0 (the "License");
  *       you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package sagex.epg.schedulesdirect.data
 import org.schedulesdirect.api.Airing.FinaleStatus
 import org.schedulesdirect.api.Airing.LiveStatus
 import org.schedulesdirect.api.Airing.PremiereStatus
-import org.schedulesdirect.api.Airing.TvRating
 
 class SageAiring {
 	String programId
@@ -27,7 +26,7 @@ class SageAiring {
 	long durationMillis
 	int partNumber
 	int totalParts
-	TvRating tvRating
+	String tvRating
 	boolean closedCaptioned
 	boolean stereo
 	boolean hdtv

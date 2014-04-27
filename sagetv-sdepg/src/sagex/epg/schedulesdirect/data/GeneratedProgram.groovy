@@ -1,5 +1,5 @@
 /*
- *      Copyright 2012 Battams, Derek
+ *      Copyright 2012-2014 Battams, Derek
  *
  *       Licensed under the Apache License, Version 2.0 (the "License");
  *       you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package sagex.epg.schedulesdirect.data
 
-import org.schedulesdirect.api.Program.MPAARating
 
 class GeneratedProgram {
 	String id
@@ -24,7 +23,7 @@ class GeneratedProgram {
 	String description
 	String[] categories
 	SageCreditList credits
-	MPAARating rating
+	String rating
 	String[] advisories
 	int year
 	Date originalAirDate

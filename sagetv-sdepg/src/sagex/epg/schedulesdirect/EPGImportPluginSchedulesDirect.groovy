@@ -234,7 +234,7 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 		if(airGeneratorsEnabled) {
 			if(licResp.isLicensed()) {
 				airingGenerator.generate().each {
-					if(db && !db.addAiringPublic2(it.programId, it.stationId, it.startTime, it.durationMillis, getPartsByte(it.partNumber, it.totalParts), getMiscInt(it), it.tvRating != Airing.TvRating.NONE ? it?.tvRating.toString() : null))
+					if(db && !db.addAiringPublic2(it.programId, it.stationId, it.startTime, it.durationMillis, getPartsByte(it.partNumber, it.totalParts), getMiscInt(it), it.tvRating))
 						LOG.error "Failed to insert airing details for:\n$it\n"
 					else if(db && it.broadcastLanguage != null && it.broadcastLanguage.toLowerCase() != 'english') {
 						// TODO Must be able to load a Program from wiz.bin, reset the lang desc then reinsert it into wiz.bin

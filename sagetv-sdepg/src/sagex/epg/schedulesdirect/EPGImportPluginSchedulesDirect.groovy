@@ -79,6 +79,7 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 	private String providerId
 	private String lineupType
 	private String providerName
+	private long lastEpgDownload
 
 	public EPGImportPluginSchedulesDirect() {
 		db = null
@@ -88,6 +89,7 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 		programGenerator = new ProgramGenerator(new File(Plugin.RESOURCE_DIR, 'program_generators').getAbsolutePath())
 		airingGenerator = new AiringGenerator(new File(Plugin.RESOURCE_DIR, 'airing_generators').getAbsolutePath())
 		chanGenerator = new ChannelGenerator(new File(Plugin.RESOURCE_DIR, 'channel_generators').getAbsolutePath())
+		lastEpgDownload = 0L
 	}
 
 	// Not supporting local markets
@@ -338,12 +340,17 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 		def start = System.currentTimeMillis()
 		def sdId = Configuration.GetServerProperty(Plugin.PROP_SD_USER, '')
 		def sdPwd = Configuration.GetServerProperty(Plugin.PROP_SD_PWD, '')
+		def force = Boolean.parseBoolean(Configuration.GetServerProperty(Plugin.PROP_FORCED_REFRESH, 'false'))
 		try {
-			if(db)
-				new EpgDownloader(sdId, sdPwd, providerName).download()
+			if(force || System.currentTimeMillis() - lastEpgDownload >= 900000) {
+				if(db)
+					new EpgDownloader(sdId, sdPwd).download()
+				lastEpgDownload = System.currentTimeMillis()
+			} else
+				LOG.warn 'Last successful EPG download within last 15 minutes; skipping another one!'
 		} catch(IOException e) {
 			LOG.error 'Download of EPG data failed!', e
-			Global.DebugLog('EPG update failed: Download of data from sd4j failed!  See plugin logs for details.')
+			Global.DebugLog('EPG update failed: Download of data from sdjson failed!  See plugin logs for details.')
 			return false
 		}
 		LOG.info "Performed EPG download in ${System.currentTimeMillis() - start}ms"

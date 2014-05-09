@@ -34,13 +34,10 @@ class EpgDownloader {
 	
 	private def id
 	private def pwd
-	private def lineupName
 	
-	EpgDownloader(def id, def pwd, def lineupName) {
+	EpgDownloader(def id, def pwd) {
 		this.id = id
 		this.pwd = pwd
-		this.lineupName = lineupName
-		LOG.info "Downloading EPG data for lineup: '$lineupName'"
 	}
 		
 	void download() throws IOException {
@@ -64,7 +61,7 @@ class EpgDownloader {
 		cmd << '--max-sched-chunk' << PluginAPI.GetPluginConfigValue(plugin, Plugin.PROP_SDJSON_SCHED_CHUNK)
 		def stationFile = new File(targetDir, 'stations.txt')
 		stationFile.delete()
-		def stationList = ChannelAPI.GetAllChannels().findAll { ChannelAPI.IsChannelViewableOnLineup(it, lineupName) }
+		def stationList = ChannelAPI.GetAllChannels().findAll { ChannelAPI.IsChannelViewable(it) }
 		stationFile.withWriterAppend('UTF-8') { f ->
 			stationList.each { f.append(Integer.toString(ChannelAPI.GetStationID(it)) + IOUtils.LINE_SEPARATOR)}
 		}

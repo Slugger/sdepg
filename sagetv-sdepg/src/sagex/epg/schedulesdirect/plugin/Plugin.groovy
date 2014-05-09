@@ -118,7 +118,7 @@ final class Plugin extends AbstractPlugin {
 	static void forceEpgRefresh() {
 		Configuration.SetServerProperty(PROP_FORCED_REFRESH, 'true')
 		def epg = new EPGImportPluginSchedulesDirect()
-		if(epg.getProviders().findResult { return forceRefresh(it[1]) })
+		if(epg.getProviders(null).each { forceRefresh(it[1]) })
 			LOG.info 'EPG refresh forced by user!'
 		else
 			LOG.warn 'Unable to force EPG refresh!'

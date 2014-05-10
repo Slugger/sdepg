@@ -70,6 +70,8 @@ and restart SageTV.
        	<ReleaseNotes><![CDATA[
 CHANGES SINCE LAST RELEASE
  
-@@CHANGELOG@@
+* Fix bug where using multiple SD lineups with different Sage inputs did not work
+ 
+* Add support for various additional metadata tags (subtitled, Dolby, letterboxed, SAP, etc.) 
 		]]></ReleaseNotes>
 </SageTVPlugin>

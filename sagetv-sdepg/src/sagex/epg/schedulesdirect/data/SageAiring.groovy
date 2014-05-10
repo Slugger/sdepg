@@ -15,6 +15,7 @@
  */
 package sagex.epg.schedulesdirect.data
 
+import org.schedulesdirect.api.Airing.DolbyStatus
 import org.schedulesdirect.api.Airing.FinaleStatus
 import org.schedulesdirect.api.Airing.LiveStatus
 import org.schedulesdirect.api.Airing.PremiereStatus
@@ -30,6 +31,11 @@ class SageAiring {
 	boolean closedCaptioned
 	boolean stereo
 	boolean hdtv
+	boolean subtitled
+	boolean sap
+	DolbyStatus dolbyStatus
+	boolean letterboxed
+	boolean newAiring
 	PremiereStatus premiereStatus
 	FinaleStatus finaleStatus
 	LiveStatus liveStatus

@@ -450,8 +450,23 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 			case Airing.FinaleStatus.SERIES_FINALE: i |= IEPGDBPublicAdvanced.SERIES_FINALE_MASK; break
 			case Airing.FinaleStatus.SEASON_FINALE: i |= IEPGDBPublicAdvanced.SEASON_FINALE_MASK; break
 		}
-		if(air.liveStatus == Airing.LiveStatus.LIVE)
-			i |= IEPGDBPublicAdvanced.LIVE_MASK
+		switch(air.liveStatus) {
+			case Airing.LiveStatus.LIVE: i |= IEPGDBPublicAdvanced.LIVE_MASK; break
+			case Airing.LiveStatus.TAPE: i |= IEPGDBPublicAdvanced.TAPE_MASK; break
+		}
+		if(air.subtitled)
+			i |= IEPGDBPublicAdvanced.SUBTITLE_MASK
+		if(air.sap)
+			i |= IEPGDBPublicAdvanced.SAP_MASK
+		switch(air.dolbyStatus) {
+			case Airing.DolbyStatus.DD51: i |= IEPGDBPublicAdvanced.DD51_MASK; break
+			case Airing.DolbyStatus.DD:
+			case Airing.DolbyStatus.DOLBY: i |= IEPGDBPublicAdvanced.DOLBY_MASK; break
+		}
+		if(air.letterboxed)
+			i |= IEPGDBPublicAdvanced.LETTERBOX_MASK
+		if(air.newAiring)
+			i |= IEPGDBPublicAdvanced.NEW_MASK
 		return i
 	}
 	

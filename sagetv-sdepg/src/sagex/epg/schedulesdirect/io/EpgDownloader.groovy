@@ -67,6 +67,10 @@ class EpgDownloader {
 			targetDir.mkdirs()
 		def targetFile = EPGImportPluginSchedulesDirect.EPG_SRC
 		def plugin = PluginAPI.GetInstalledPlugins().find { PluginAPI.GetPluginIdentifier(it) == 'sdepg' }
+		if(PluginAPI.GetPluginConfigValue(plugin, Plugin.PROP_SKIP_GRAB).toBoolean()) {
+			LOG.warn 'Skipping grabber execution; user disabled!'
+			return
+		}
 		backupLocalCache(targetFile, plugin)
 		def cmd = [new File("${System.getProperty('java.home')}/bin/java").absolutePath, "-Xmx${PluginAPI.GetPluginConfigValue(plugin, Plugin.PROP_GRABBER_HEAP)}m", "-Dsdjson.fs.capture=${new File('plugins/sdepg/capture/grabber').absolutePath}"]
 		def capSettings = PluginAPI.GetPluginConfigValue(plugin, Plugin.PROP_SDJSON_CAP)

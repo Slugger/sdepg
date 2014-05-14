@@ -65,6 +65,7 @@ final class Plugin extends AbstractPlugin {
 	static final String PROP_INST_LOGOS = "${PROP_PREFIX}/installLogos"
 	static final String PROP_SDJSON_CAP = "${PROP_PREFIX}/sdjsonCapture"
 	static final String PROP_CACHE_BACKUP_SIZE = "${PROP_PREFIX}/cacheBackupSize"
+	static final String PROP_SKIP_GRAB = "${PROP_PREFIX}/skipGrab"
 	
 	static final String OPT_SE_SRC_TRIBUNE_PREF = 'Tribune (preferred)'
 	static final String OPT_SE_SRC_TRIBUNE_ONLY = 'Tribune (only)'
@@ -241,7 +242,10 @@ final class Plugin extends AbstractPlugin {
 		
 		PluginProperty cacheBackupSize = new PluginProperty(SageTVPlugin.CONFIG_INTEGER, PROP_CACHE_BACKUP_SIZE, '3', 'Number of Cache Backups', 'Number of EPG cache backups that should be kept around.')
 		cacheBackupSize.setPersistence(new ServerPropertyPersistence())
-		
+
+		PluginProperty skipGrab = new PluginProperty(SageTVPlugin.CONFIG_BOOL, PROP_SKIP_GRAB, 'false', 'Skip Grabber Run', 'Set to true if you just want to reprocess the existing cache and not attempt a new pull of EPG data.')
+		skipGrab.setPersistence(new ServerPropertyPersistence())
+
 		addProperty(refresh)
 		addProperty(sdUser)
 		addProperty(sdPwd)
@@ -257,6 +261,7 @@ final class Plugin extends AbstractPlugin {
 		addProperty(lineupEditors)
 		addProperty(cacheTTL)
 		addProperty(cacheBackupSize)
+		addProperty(skipGrab)
 		addProperty(sdjsonUrl)
 		addProperty(grabberLogLvl)
 		addProperty(grabberHeap)

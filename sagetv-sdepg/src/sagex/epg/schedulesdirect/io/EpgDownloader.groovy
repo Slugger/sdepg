@@ -15,6 +15,7 @@
 */
 package sagex.epg.schedulesdirect.io
 
+import org.apache.commons.io.FileUtils
 import org.apache.commons.io.IOUtils
 import org.apache.log4j.Logger
 
@@ -39,13 +40,34 @@ class EpgDownloader {
 		this.id = id
 		this.pwd = pwd
 	}
-		
+	
+	protected void backupLocalCache(File src, def plugin) {
+		def root = new File("${Plugin.RESOURCE_DIR}/backups")
+		def numToKeep = PluginAPI.GetPluginConfigValue(plugin, Plugin.PROP_CACHE_BACKUP_SIZE).toInteger()
+		(numToKeep..1).each {
+			def old = new File(root, "${src.name}.$it")
+			if(it < numToKeep && old.exists()) {
+				if(!old.renameTo(new File(root, "${src.name}.${it + 1}")))
+					LOG.warn "Unable to rename backup $it to ${it + 1}!"
+			} else if(old.exists() && !old.delete())
+				LOG.warn "Unable to delete cache backup: $old"
+		}
+		if(src.exists()) {
+			try {
+				FileUtils.copyFile(src, new File(root, "${src.name}.1"))
+			} catch(IOException e) {
+				LOG.warn 'Unable to create EPG cache backup!', e
+			}
+		}
+	}
+	
 	void download() throws IOException {
 		def targetDir = EPGImportPluginSchedulesDirect.EPG_SRC.parentFile
 		if(!targetDir.exists())
 			targetDir.mkdirs()
 		def targetFile = EPGImportPluginSchedulesDirect.EPG_SRC
 		def plugin = PluginAPI.GetInstalledPlugins().find { PluginAPI.GetPluginIdentifier(it) == 'sdepg' }
+		backupLocalCache(targetFile, plugin)
 		def cmd = [new File("${System.getProperty('java.home')}/bin/java").absolutePath, "-Xmx${PluginAPI.GetPluginConfigValue(plugin, Plugin.PROP_GRABBER_HEAP)}m", "-Dsdjson.fs.capture=${new File('plugins/sdepg/capture/grabber').absolutePath}"]
 		def capSettings = PluginAPI.GetPluginConfigValue(plugin, Plugin.PROP_SDJSON_CAP)
 		if(capSettings == 'JSON' || capSettings == 'ALL')

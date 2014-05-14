@@ -64,6 +64,7 @@ final class Plugin extends AbstractPlugin {
 	static final String PROP_SE_SRC = "${PROP_PREFIX}/seSource2"
 	static final String PROP_INST_LOGOS = "${PROP_PREFIX}/installLogos"
 	static final String PROP_SDJSON_CAP = "${PROP_PREFIX}/sdjsonCapture"
+	static final String PROP_CACHE_BACKUP_SIZE = "${PROP_PREFIX}/cacheBackupSize"
 	
 	static final String OPT_SE_SRC_TRIBUNE_PREF = 'Tribune (preferred)'
 	static final String OPT_SE_SRC_TRIBUNE_ONLY = 'Tribune (only)'
@@ -238,6 +239,9 @@ final class Plugin extends AbstractPlugin {
 		PluginProperty sdjsonCap = new PluginProperty(SageTVPlugin.CONFIG_CHOICE, PROP_SDJSON_CAP, 'OFF', 'Capture sdjson Data', 'Select the type(s) of sdjson data to capture.', ['OFF', 'JSON', 'HTTP', 'ALL'] as String[])
 		sdjsonCap.setPersistence(new ServerPropertyPersistence())
 		
+		PluginProperty cacheBackupSize = new PluginProperty(SageTVPlugin.CONFIG_INTEGER, PROP_CACHE_BACKUP_SIZE, '3', 'Number of Cache Backups', 'Number of EPG cache backups that should be kept around.')
+		cacheBackupSize.setPersistence(new ServerPropertyPersistence())
+		
 		addProperty(refresh)
 		addProperty(sdUser)
 		addProperty(sdPwd)
@@ -252,6 +256,7 @@ final class Plugin extends AbstractPlugin {
 		addProperty(chanGenerators)
 		addProperty(lineupEditors)
 		addProperty(cacheTTL)
+		addProperty(cacheBackupSize)
 		addProperty(sdjsonUrl)
 		addProperty(grabberLogLvl)
 		addProperty(grabberHeap)

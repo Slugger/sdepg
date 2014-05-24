@@ -14,7 +14,7 @@
 	<classpathentry kind="var" path="SAGELIB/sagex-api.jar"/>
 	<classpathentry kind="var" path="SAGELIB/commons-codec-1.3.jar"/>
 	<classpathentry kind="var" path="SAGELIB/json-20140107.jar"/>
-	<classpathentry kind="var" path="M2_REPO/org/schedulesdirect/sdjson-api/0.20131021.1-SNAPSHOT/sdjson-api-0.20131021.1-SNAPSHOT.jar"/>
 	<classpathentry kind="var" path="SAGELIB/commons-io-2.4.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/schedulesdirect/sdjson-api/0.20131021.2-SNAPSHOT/sdjson-api-0.20131021.2-SNAPSHOT.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

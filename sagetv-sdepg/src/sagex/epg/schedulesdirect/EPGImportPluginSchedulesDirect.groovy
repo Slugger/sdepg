@@ -27,7 +27,6 @@ import org.schedulesdirect.api.ZipEpgClient
 
 import sage.EPGDBPublic
 import sage.EPGImportPlugin
-import sagex.SageAPI
 import sagex.api.ChannelAPI
 import sagex.api.Configuration
 import sagex.api.Global
@@ -44,7 +43,7 @@ import sagex.epg.schedulesdirect.io.lineups.LineupEditor
 import sagex.epg.schedulesdirect.plugin.Plugin
 import sagex.epg.schedulesdirect.sagetv.helpers.EPGDBPublicAdvancedImpl
 import sagex.epg.schedulesdirect.sagetv.helpers.IEPGDBPublicAdvanced
-import sagex.remote.rmi.RMISageAPI
+import sagex.epg.schedulesdirect.tasks.SeriesInfoLoader
 
 import com.google.code.sagetvaddons.license.License
 import com.google.code.sagetvaddons.license.LicenseResponse
@@ -80,6 +79,7 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 	private String lineupType
 	private String providerName
 	private long lastEpgDownload
+	private Set seriesInfoObjs
 
 	public EPGImportPluginSchedulesDirect() {
 		db = null
@@ -90,6 +90,7 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 		airingGenerator = new AiringGenerator(new File(Plugin.RESOURCE_DIR, 'airing_generators').getAbsolutePath())
 		chanGenerator = new ChannelGenerator(new File(Plugin.RESOURCE_DIR, 'channel_generators').getAbsolutePath())
 		lastEpgDownload = 0L
+		seriesInfoObjs = new HashSet()
 	}
 
 	// Not supporting local markets
@@ -217,6 +218,7 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 		LOG.debug "Processed ${uniqueShows + skippedShows + reloadedShows} show(s); UNIQUE: ${uniqueShows}; RELOADED: ${reloadedShows}; SKIPPED: ${skippedShows}"
 		processAiringGenerators()
 		processedPrograms.clear()
+		new Thread(new SeriesInfoLoader(seriesInfoObjs)).start()
 		return true
 	}
 
@@ -314,6 +316,10 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 			return null
 		}
 		processedPrograms.put prog.id, sProg
+		if(prog.seriesInfo)
+			seriesInfoObjs.add prog.seriesInfo
+		else if(prog.id.startsWith('SH'))
+			seriesInfoObjs.add prog
 		return sProg
 	}
 
@@ -596,10 +602,5 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 		} else
 			LOG.warn 'Not processing channel generators because they are disabled!'
 		return rc
-	}
-	
-	static void main(String[] args) {
-		SageAPI.setProvider(new RMISageAPI(args[0]))
-		new EPGImportPluginSchedulesDirect().updateGuide('508278033', null)
 	}
 }

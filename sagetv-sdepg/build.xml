@@ -13,8 +13,8 @@
 <!--   See the License for the specific language governing permissions and			-->
 <!--   limitations under the License.												-->
 <project name="sdepg" default="build" basedir=".">
-  <property name="sage.jar" value="C:/Program Files/SageTV/SageTV/Sage.jar" />
-  <property name="sage.libs" value="X:/" />
+  <property name="sage.jar" value="/usr/local/share/sagetv/Sage.jar" />
+  <property name="sage.libs" value="/mnt/sagelibs" />
   <property name="src.token" value="@@" />
   <property name="app.res.dir" value="plugins/sdepg" />
   <property name="src" value="src" />

@@ -47,7 +47,7 @@ and restart SageTV.
         </Dependency>
         <Dependency>
         	<Plugin>sdjson-api</Plugin>
-        	<MinVersion>0.20131021.2.3</MinVersion>
+        	<MinVersion>0.20131021.2.4</MinVersion>
         </Dependency>
         <Dependency>
         	<Plugin>sagex-api</Plugin>
@@ -70,10 +70,22 @@ and restart SageTV.
        	<ReleaseNotes><![CDATA[
 CHANGES SINCE LAST RELEASE
  
-* Fix bug where using multiple SD lineups with different Sage inputs did not work
+* Update to latest sdjson-api version
  
-* Add support for various additional metadata tags (subtitled, Dolby, letterboxed, SAP, etc.)
+* Update sdjson-grabber to latest version
  
-* Handle new format from SD for movie star ratings  
+* Reset various default property values
+ 
+* Various bug fixes
+ 
+UPGRADE NOTES
+ 
+Users who are upgrading should modify their plugin settings as follows:
+ 
+* Base sdjson URL: https://json.schedulesdirect.org
+ 
+* Max Schedule Request for sdjson: 250 (was 1000)
+ 
+* Max Program Request for sdjson: 5000 (was 50000)
 		]]></ReleaseNotes>
 </SageTVPlugin>

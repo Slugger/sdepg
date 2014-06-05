@@ -17,7 +17,7 @@
 	def clnt = request.getAttribute('clnt')
 	def mub
 %>
-<h2>Configured Headends</h2>
+<h2>Configured Lineups</h2>
 <form action="index.gsp" method="post">
 	<input type="hidden" name="c" value="rmhe" />
 	<input type="hidden" name="m" value="headends" />
@@ -38,7 +38,7 @@
 	<input type="submit" name="submit" value="Remove Selected" />
 </form>
 
-<h2>Add Headend</h2>
+<h2>Add Lineup</h2>
 <div>
 	<span>Enter zip/postal code:</span>
 	<span><input type="text" name="zip" id="srchInput" /></span>
@@ -81,25 +81,29 @@
 		});
 	});
 	\$('#search').click(function() {
-		\$(this).attr('disabled', true);
-		\$(this).attr('value', 'Searching...');
-		\$.ajax({
-			url: '/sage/sdjson/ajax.groovy',
-			context: \$(this),
-			data: {'z': \$('#srchInput').val(), 'c': 'search', 'i': \$('#srchCountry').val()},
-			success: function() {
-				\$('#srchResults').html(arguments[0]);
-				\$('#addFrm').css('visibility', 'visible');
-			
-			},
-			error: function() {
-				alert('Search failed!  Please try again.');
-			},
-			complete: function() {
-				\$(this).attr('disabled', false);
-				\$(this).attr('value', 'Search');
-			}
-		});
+		var country = \$('#srchCountry').val();
+		if(country.toUpperCase().match(/^[A-Z]{3}\$/) != null) {
+			\$(this).attr('disabled', true);
+			\$(this).attr('value', 'Searching...');
+			\$.ajax({
+				url: '/sage/sdjson/ajax.groovy',
+				context: \$(this),
+				data: {'z': \$('#srchInput').val(), 'c': 'search', 'i': country},
+				success: function() {
+					\$('#srchResults').html(arguments[0]);
+					\$('#addFrm').css('visibility', 'visible');
+				
+				},
+				error: function() {
+					alert('Search failed!  Please try again.');
+				},
+				complete: function() {
+					\$(this).attr('disabled', false);
+					\$(this).attr('value', 'Search');
+				}
+			});
+		} else
+			alert('Country must be 3 letter ISO country code (i.e. USA, CAN, etc.)');
 	});
 });
 -->

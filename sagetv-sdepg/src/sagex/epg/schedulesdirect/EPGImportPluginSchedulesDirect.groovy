@@ -377,7 +377,7 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 			clnt = new ZipEpgClient(EPG_SRC)
 			clnt.getLineupByUriPath(EpgClient.getUriPathForLineupId(providerId)).stations.findAll {
 				def chan = ChannelAPI.GetChannelForStationID(it.id.toInteger())
-				return chan != null && ChannelAPI.IsChannelViewableOnLineup(chan, providerName)
+				return chan != null && ChannelAPI.IsChannelViewable(chan)
 			}.each {
 				it.airings.each { addProgram(it.program); addAiring(it) }
 				if(installLogosEnabled)

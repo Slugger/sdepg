@@ -47,7 +47,7 @@ and restart SageTV.
         </Dependency>
         <Dependency>
         	<Plugin>sdjson-api</Plugin>
-        	<MinVersion>0.20131021.2.4</MinVersion>
+        	<MinVersion>0.20140530.0.0</MinVersion>
         </Dependency>
         <Dependency>
         	<Plugin>sagex-api</Plugin>

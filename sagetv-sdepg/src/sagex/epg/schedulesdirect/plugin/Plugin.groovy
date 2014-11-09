@@ -166,17 +166,21 @@ final class Plugin extends AbstractPlugin {
 						def sdId = Configuration.GetServerProperty(Plugin.PROP_SD_USER, '')
 						def sdPwd = Configuration.GetServerProperty(Plugin.PROP_SD_PWD, '')
 						def url = Configuration.GetServerProperty(Plugin.PROP_SDJSON_URL, Config.DEFAULT_BASE_URL)
-						def zipClnt = new ZipEpgClient(EPGImportPluginSchedulesDirect.EPG_SRC)
+						def zipClnt
 						def netClnt
 						def svrTime
+						def localTime
 						try {
+							zipClnt = new ZipEpgClient(EPGImportPluginSchedulesDirect.EPG_SRC)
 							netClnt = new NetworkEpgClient(sdId, sdPwd, EpgDownloader.generateUserAgent(), url, false)
 							svrTime = netClnt.userStatus.lastServerRefresh
+							localTime = zipClnt.userStatus.lastServerRefresh
 						} finally {
 							if(netClnt)
 								try { netClnt.close() } catch(Throwable t) { LOG.error 'SD Error', t }
+							if(zipClnt)
+								try { zipClnt.close() } catch(Throwable t) { LOG.error 'SD Error', t }
 						}
-						def localTime = zipClnt.userStatus.lastServerRefresh
 						if(LOG.isDebugEnabled())
 							LOG.debug "WATCHDOG -> SRV: $svrTime ~|~ LOCAL: $localTime"
 						if(svrTime != null && svrTime.time > localTime.time) {

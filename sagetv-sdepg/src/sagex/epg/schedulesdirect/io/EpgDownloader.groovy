@@ -58,7 +58,9 @@ class EpgDownloader {
 			} catch(IOException e) {
 				LOG.warn 'Unable to create EPG cache backup!', e
 			}
-		}
+			LOG.info "Backed up local cache file [$src]"
+		} else
+			LOG.warn "Skipped local cache backup; it doesn't exist! [$src]"
 	}
 	
 	void download() throws IOException {

@@ -16,6 +16,9 @@
 package sagex.epg.schedulesdirect.plugin
 
 import org.apache.log4j.Logger
+import org.schedulesdirect.api.Config
+import org.schedulesdirect.api.NetworkEpgClient
+import org.schedulesdirect.api.ZipEpgClient
 
 import sage.SageTVPlugin
 import sage.SageTVPluginRegistry
@@ -24,6 +27,7 @@ import sagex.api.Configuration
 import sagex.api.Database
 import sagex.api.Global
 import sagex.epg.schedulesdirect.EPGImportPluginSchedulesDirect
+import sagex.epg.schedulesdirect.io.EpgDownloader
 import sagex.epg.schedulesdirect.logging.InternalLogger
 import sagex.plugin.AbstractPlugin
 import sagex.plugin.ButtonClickHandler
@@ -66,6 +70,7 @@ final class Plugin extends AbstractPlugin {
 	static final String PROP_SDJSON_CAP = "${PROP_PREFIX}/sdjsonCapture"
 	static final String PROP_CACHE_BACKUP_SIZE = "${PROP_PREFIX}/cacheBackupSize"
 	static final String PROP_SKIP_GRAB = "${PROP_PREFIX}/skipGrab"
+	static final String PROP_UPDATE_ALL_DAY = "${PROP_PREFIX}/updateAllDay"
 	
 	static final String OPT_SE_SRC_TRIBUNE_PREF = 'Tribune (preferred)'
 	static final String OPT_SE_SRC_TRIBUNE_ONLY = 'Tribune (only)'
@@ -117,8 +122,8 @@ final class Plugin extends AbstractPlugin {
 		}
 	}
 	
-	static void forceEpgRefresh() {
-		Configuration.SetServerProperty(PROP_FORCED_REFRESH, 'true')
+	synchronized static void forceEpgRefresh(boolean forceDownload = true) {
+		Configuration.SetServerProperty(PROP_FORCED_REFRESH, Boolean.toString(forceDownload))
 		def epg = new EPGImportPluginSchedulesDirect()
 		if(epg.getProviders(null).each { forceRefresh(it[1]) })
 			LOG.info 'EPG refresh forced by user!'
@@ -148,6 +153,40 @@ final class Plugin extends AbstractPlugin {
 		def captureRoot = new File('plugins/sdepg/capture')
 		System.setProperty('sdjson.fs.capture', new File(captureRoot, 'plugin').absolutePath)
 		updateSdjsonCaptureSettings()
+	}
+	
+	protected void startWatchdog() {
+		Thread.startDaemon('sdepg-watchdog') {
+			def rng = new Random()
+			try {
+				LOG.info 'EPG watchdog started!'
+				while(true) {
+					if(Boolean.parseBoolean(Configuration.GetServerProperty(PROP_UPDATE_ALL_DAY, 'false'))) {
+						LOG.debug 'Checking for new EPG data...'
+						def sdId = Configuration.GetServerProperty(Plugin.PROP_SD_USER, '')
+						def sdPwd = Configuration.GetServerProperty(Plugin.PROP_SD_PWD, '')
+						def url = Configuration.GetServerProperty(Plugin.PROP_SDJSON_URL, Config.DEFAULT_BASE_URL)
+						def zipClnt = new ZipEpgClient(EPGImportPluginSchedulesDirect.EPG_SRC)
+						def netClnt = new NetworkEpgClient(sdId, sdPwd, EpgDownloader.generateUserAgent(), url, false)
+						def svrTime = netClnt.userStatus.lastServerRefresh
+						def localTime = zipClnt.userStatus.lastServerRefresh
+						if(LOG.isDebugEnabled())
+							LOG.debug "WATCHDOG -> SRV: $svrTime ~|~ LOCAL: $localTime"
+						if(svrTime.time < localTime.time) {
+							def delay = rng.nextInt(20) + 1 
+							LOG.info "EPG server reports new data is available; grabbing it now! [WAIT: $delay minutes]"
+							sleep 60000L * delay
+							forceEpgRefresh(false)
+						}
+					} else if(LOG.isDebugEnabled())
+						LOG.debug 'EPG watchdog is disabled'
+					sleep 600000
+				}
+				LOG.warn 'Watchdog halted!'
+			} catch(Throwable t) {
+				LOG.error('Error in Watchdog', t)
+			}
+		}
 	}
 	
 	@ButtonClickHandler('sdepg/refresh')
@@ -245,8 +284,12 @@ final class Plugin extends AbstractPlugin {
 
 		PluginProperty skipGrab = new PluginProperty(SageTVPlugin.CONFIG_BOOL, PROP_SKIP_GRAB, 'false', 'Skip Grabber Run', 'Set to true if you just want to reprocess the existing cache and not attempt a new pull of EPG data.')
 		skipGrab.setPersistence(new ServerPropertyPersistence())
+		
+		PluginProperty updateAllDay = new PluginProperty(SageTVPlugin.CONFIG_BOOL, PROP_UPDATE_ALL_DAY, 'false', 'Update EPG All Day', 'When true, the EPG will be updated multiple times a day as new EPG data becomes available.')
+		updateAllDay.setPersistence(new ServerPropertyPersistence())
 
 		addProperty(refresh)
+		addProperty(updateAllDay)
 		addProperty(sdUser)
 		addProperty(sdPwd)
 		addProperty(logLvl)
@@ -268,6 +311,8 @@ final class Plugin extends AbstractPlugin {
 		addProperty(sdjsonSchedChunk)
 		addProperty(sdjsonProgChunk)
 		addProperty(sdjsonThreads)
+		
+		startWatchdog()
 	}
 	
 	@ConfigValueChangeHandler('sdepg/logLevel')

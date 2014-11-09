@@ -179,7 +179,7 @@ final class Plugin extends AbstractPlugin {
 						def localTime = zipClnt.userStatus.lastServerRefresh
 						if(LOG.isDebugEnabled())
 							LOG.debug "WATCHDOG -> SRV: $svrTime ~|~ LOCAL: $localTime"
-						if(svrTime != null && svrTime.time < localTime.time) {
+						if(svrTime != null && svrTime.time > localTime.time) {
 							def delay = rng.nextInt(20) + 1 
 							LOG.info "EPG server reports new data is available; grabbing it now! [WAIT: $delay minutes]"
 							sleep 60000L * delay

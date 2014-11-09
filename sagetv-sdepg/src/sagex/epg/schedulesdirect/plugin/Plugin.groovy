@@ -167,12 +167,19 @@ final class Plugin extends AbstractPlugin {
 						def sdPwd = Configuration.GetServerProperty(Plugin.PROP_SD_PWD, '')
 						def url = Configuration.GetServerProperty(Plugin.PROP_SDJSON_URL, Config.DEFAULT_BASE_URL)
 						def zipClnt = new ZipEpgClient(EPGImportPluginSchedulesDirect.EPG_SRC)
-						def netClnt = new NetworkEpgClient(sdId, sdPwd, EpgDownloader.generateUserAgent(), url, false)
-						def svrTime = netClnt.userStatus.lastServerRefresh
+						def netClnt
+						def svrTime
+						try {
+							netClnt = new NetworkEpgClient(sdId, sdPwd, EpgDownloader.generateUserAgent(), url, false)
+							svrTime = netClnt.userStatus.lastServerRefresh
+						} finally {
+							if(netClnt)
+								try { netClnt.close() } catch(Throwable t) { LOG.error 'SD Error', t }
+						}
 						def localTime = zipClnt.userStatus.lastServerRefresh
 						if(LOG.isDebugEnabled())
 							LOG.debug "WATCHDOG -> SRV: $svrTime ~|~ LOCAL: $localTime"
-						if(svrTime.time < localTime.time) {
+						if(svrTime != null && svrTime.time < localTime.time) {
 							def delay = rng.nextInt(20) + 1 
 							LOG.info "EPG server reports new data is available; grabbing it now! [WAIT: $delay minutes]"
 							sleep 60000L * delay

@@ -12,7 +12,7 @@ If you are upgrading from version 0.0.5.x or older then you MUST follow
 the additional upgrade instructions outlined at http://bit.ly/1k5G6f9 otherwise
 your EPG data will slowly disappear.
  
-If you are upgrading from 0.0.6.x to 0.0.6.y (where y > x) then you do not need
+If you are upgrading from 0.0.6.x to anything newer then you do not need
 to do anything special.  Just apply the updated plugin from the plugin manager
 and restart SageTV.
        </Description>
@@ -47,7 +47,7 @@ and restart SageTV.
         </Dependency>
         <Dependency>
         	<Plugin>sdjson-api</Plugin>
-        	<MinVersion>0.20140530.0.0</MinVersion>
+        	<MinVersion>0.20140530.0.1</MinVersion>
         </Dependency>
         <Dependency>
         	<Plugin>sagex-api</Plugin>
@@ -70,13 +70,13 @@ and restart SageTV.
        	<ReleaseNotes><![CDATA[
 CHANGES SINCE LAST RELEASE
  
-* Update to latest sdjson-api version
+* Schedules Direct now updates its data multiple times a day; sdepg will too (disabled by default)
  
-* Update sdjson-grabber to latest version
+* Issue 11: Don't wipe logos until grabber reports success
  
-* Reset various default property values
+* Add additional logging for local cache backup routine
  
-* Various bug fixes
+* Upgrade to latest sdjson api and grabber
  
 UPGRADE NOTES
  

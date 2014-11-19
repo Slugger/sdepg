@@ -158,9 +158,9 @@ final class Plugin extends AbstractPlugin {
 	protected void startWatchdog() {
 		Thread.startDaemon('sdepg-watchdog') {
 			def rng = new Random()
-			try {
-				LOG.info 'EPG watchdog started!'
-				while(true) {
+			LOG.info 'EPG watchdog started!'
+			while(true) {
+				try {
 					if(Boolean.parseBoolean(Configuration.GetServerProperty(PROP_UPDATE_ALL_DAY, 'false'))) {
 						LOG.debug 'Checking for new EPG data...'
 						def sdId = Configuration.GetServerProperty(Plugin.PROP_SD_USER, '')
@@ -184,19 +184,19 @@ final class Plugin extends AbstractPlugin {
 						if(LOG.isDebugEnabled())
 							LOG.debug "WATCHDOG -> SRV: $svrTime ~|~ LOCAL: $localTime"
 						if(svrTime != null && svrTime.time > localTime.time) {
-							def delay = rng.nextInt(20) + 1 
+							def delay = rng.nextInt(20) + 1
 							LOG.info "EPG server reports new data is available; grabbing it now! [WAIT: $delay minutes]"
 							sleep 60000L * delay
 							forceEpgRefresh(false)
 						}
 					} else if(LOG.isDebugEnabled())
 						LOG.debug 'EPG watchdog is disabled'
-					sleep 600000
+				} catch(Throwable t) {
+					LOG.error('Error in Watchdog', t)
 				}
-				LOG.warn 'Watchdog halted!'
-			} catch(Throwable t) {
-				LOG.error('Error in Watchdog', t)
+				sleep 600000
 			}
+			LOG.warn 'Watchdog halted!'
 		}
 	}
 	

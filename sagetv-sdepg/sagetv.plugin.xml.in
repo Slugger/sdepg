@@ -70,13 +70,9 @@ and restart SageTV.
        	<ReleaseNotes><![CDATA[
 CHANGES SINCE LAST RELEASE
  
-* Schedules Direct now updates its data multiple times a day; sdepg will too (disabled by default)
- 
-* Issue 11: Don't wipe logos until grabber reports success
- 
-* Add additional logging for local cache backup routine
- 
 * Upgrade to latest sdjson api and grabber
+ 
+* Don't let the watchdog die when it throws an exception
  
 UPGRADE NOTES
  

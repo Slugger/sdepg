@@ -1,5 +1,5 @@
 /*
-*      Copyright 2011-2014 Battams, Derek
+*      Copyright 2011-2015 Battams, Derek
 *
 *       Licensed under the Apache License, Version 2.0 (the "License");
 *       you may not use this file except in compliance with the License.
@@ -63,6 +63,14 @@ class EpgDownloader {
 			LOG.warn "Skipped local cache backup; it doesn't exist! [$src]"
 	}
 	
+	private List getCurrentEnv() {
+		def env = []
+		System.getenv().each { k, v ->
+			env << "$k=$v"
+		}
+		env
+	}
+	
 	void download() throws IOException {
 		def targetDir = EPGImportPluginSchedulesDirect.EPG_SRC.parentFile
 		if(!targetDir.exists())
@@ -74,13 +82,12 @@ class EpgDownloader {
 			return
 		}
 		backupLocalCache(targetFile, plugin)
-		def cmd = [new File("${System.getProperty('java.home')}/bin/java").absolutePath, "-Xmx${PluginAPI.GetPluginConfigValue(plugin, Plugin.PROP_GRABBER_HEAP)}m", "-Dsdjson.fs.capture=${new File('plugins/sdepg/capture/grabber').absolutePath}"]
-		def capSettings = PluginAPI.GetPluginConfigValue(plugin, Plugin.PROP_SDJSON_CAP)
-		if(capSettings == 'JSON' || capSettings == 'ALL')
-			cmd << '-Dsdjson.capture.json-errors' << '-Dsdjson.capture.encode-errors'
-		if(capSettings == 'HTTP' || capSettings == 'ALL')
-			cmd << '-Dsdjson.capture.http' << '-Dsdjson.capture.http.content'
-		cmd << '-jar' << new File("${Plugin.RESOURCE_DIR}/tools/sdjson.jar").absolutePath
+		
+		def isWindows = System.getProperty('os.name').toLowerCase().contains('windows')
+		def cmd = []
+		if(!isWindows)
+			cmd << 'bash'
+		cmd << new File("${Plugin.RESOURCE_DIR}/tools/grabber/bin/sdjson-grabber${isWindows ? '.bat' : ''}").absolutePath
 		cmd << '--username' << id << '--password' << pwd << '--user-agent' << generateUserAgent() << '--max-threads' << PluginAPI.GetPluginConfigValue(plugin, Plugin.PROP_SDJSON_THREADS)
 		cmd << '--url' << PluginAPI.GetPluginConfigValue(plugin, Plugin.PROP_SDJSON_URL)
 		cmd << '--grabber-log-level' << PluginAPI.GetPluginConfigValue(plugin, Plugin.PROP_GRABBER_LOG_LVL)
@@ -105,11 +112,25 @@ class EpgDownloader {
 			cmd << '--force-download'
 			LOG.info('--force-download flag inserted via user refresh request!')
 		}
+				
+		// Now need to set JVM opts as env var
+		def jvmOpts = ["-Xmx${PluginAPI.GetPluginConfigValue(plugin, Plugin.PROP_GRABBER_HEAP)}m"]
+		jvmOpts << "-Dsdjson.fs.capture=\"${new File('plugins/sdepg/capture/grabber').absolutePath}\""
+		def capSettings = PluginAPI.GetPluginConfigValue(plugin, Plugin.PROP_SDJSON_CAP)
+		if(capSettings == 'JSON' || capSettings == 'ALL')
+			jvmOpts << '-Dsdjson.capture.json-errors' << '-Dsdjson.capture.encode-errors'
+		if(capSettings == 'HTTP' || capSettings == 'ALL')
+			jvmOpts << '-Dsdjson.capture.http' << '-Dsdjson.capture.http.content'
+		
+		LOG.info "JVM options: $jvmOpts"
 		LOG.info cmd.toString().replace(pwd, '*****')
-		def p = cmd.execute()
+		def env = currentEnv
+		env << "SDJSON_GRABBER_OPTS=${jvmOpts.join(' ')}"
+		def p = cmd.execute(env, null)
 		def stdout = new StringBuilder()
 		def stderr = new StringBuilder()
 		p.consumeProcessOutput(stdout, stderr)
+		
 		if(p.waitFor()) {
 			LOG.error("sdjson download failed! [rc=${p.exitValue()}]")
 			LOG.error("stdout:\n$stdout")

@@ -123,7 +123,7 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 			 *  the user's SD account, which is exactly what is needed.
 			 */
 			clnt.getLineups().each {
-				def hash = LineupMap.addId("$it.id:$it.type")
+				def hash = LineupMap.addId("$it.id:$it.transport")
 				providers.add([hash.toString(), getDisplayNameForLineup(it)])
 			}
 		} catch(Exception e) {
@@ -174,7 +174,7 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 	}
 	
 	protected String getDisplayNameForLineup(Lineup lineup) {
-		return "$lineup.name $lineup.location ($lineup.type)"
+		return "$lineup.name $lineup.location ($lineup.transport)"
 	}
 	
 	@Override

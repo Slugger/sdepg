@@ -1,6 +1,6 @@
 <%
 /*
- *      Copyright 2013-2014 Battams, Derek
+ *      Copyright 2013-2015 Battams, Derek
  *       
  *       Licensed under the Apache License, Version 2.0 (the "License");
  *       you may not use this file except in compliance with the License.
@@ -14,7 +14,11 @@
  *       See the License for the specific language governing permissions and
  *       limitations under the License.
  */
+ 	import groovy.json.JsonSlurper
+	import groovy.json.JsonOutput
+	
 	def clnt = request.getAttribute('clnt')
+	def json = new JsonSlurper().parseText(clnt.getAvailableThings('countries'))
 	def mub
 %>
 <h2>Configured Lineups</h2>
@@ -40,12 +44,34 @@
 
 <h2>Add Lineup</h2>
 <div>
-	<span>Enter zip/postal code:</span>
-	<span><input type="text" name="zip" id="srchInput" /></span>
+	<span>Select country:</span>
+	<span>
+		<select name="country" id="srchCountry">
+		<%
+			def vars = [:]
+			def singles = [:]
+			def opts = [:]
+			json.each { k, v ->
+				json."$k".each {
+					opts[it.fullName] = it
+				}
+			}
+			opts = opts.sort { it.value.fullName }
+			mub.option(value: '', '------ Select ------')
+			opts.each { k, v ->
+				mub.option(value: v.shortName, k)
+				if(!v.onePostalCode)
+					vars[v.shortName] = v.postalCode
+				else
+					singles[v.shortName] = v.postalCodeExample
+			}
+		%>
+		</select>
+	</span>
 </div>
 <div>
-	<span>Enter ISO country code:</span>
-	<span><input type="text" name="country" id="srchCountry" /></span>
+	<span>Enter zip/postal code:</span>
+	<span><input type="text" name="zip" id="srchInput" /></span>
 	<span><input type="button" id="search" value="Search" /></span>
 </div>
 <form action="index.gsp" method="post" id="addFrm" style="visibility: hidden;">
@@ -67,6 +93,8 @@
 </form>
 <script>
 <!--
+var multis = <% out << JsonOutput.toJson(vars) << ';' %>
+var singles = <% out << JsonOutput.toJson(singles) << ';' %>
 \$(document).ready(function() {
 	\$('#headends').change(function() {
 		var val = \$(this).prop('checked');
@@ -82,29 +110,52 @@
 	});
 	\$('#search').click(function() {
 		var country = \$('#srchCountry').val();
-		if(country.toUpperCase().match(/^[A-Z]{3}\$/) != null) {
-			\$(this).attr('disabled', true);
-			\$(this).attr('value', 'Searching...');
-			\$.ajax({
-				url: '/sage/sdjson/ajax.groovy',
-				context: \$(this),
-				data: {'z': \$('#srchInput').val(), 'c': 'search', 'i': country},
-				success: function() {
-					\$('#srchResults').html(arguments[0]);
-					\$('#addFrm').css('visibility', 'visible');
-				
-				},
-				error: function() {
-					alert('Search failed!  Please try again.');
-				},
-				complete: function() {
-					\$(this).attr('disabled', false);
-					\$(this).attr('value', 'Search');
-				}
-			});
+		if(country.length == 0)
+			alert('Select a country!');
+		else if(country in multis) {
+			var i = multis[country].lastIndexOf('/');
+			var opts = multis[country].length > i + 1 ? multis[country].slice(i + 1) : '';
+			var exp = multis[country].slice(1, i);
+			var regex = new RegExp('^' + exp + '\$', opts);
+			if(!regex.test(\$('#srchInput').val()))
+				alert('Zip is not valid for selected country!\\n' + multis[country]);
+			else
+				doSearch(\$(this), country);
 		} else
-			alert('Country must be 3 letter ISO country code (i.e. USA, CAN, etc.)');
+			doSearch(\$(this), country);
+	});
+	\$('#srchCountry').change(function() {
+		var input = \$(this);
+		var box = \$('#srchInput');
+		if(input.val() in singles) {
+			box.val(singles[input.val()]);
+			box.prop('readonly', true);
+		} else {
+			box.prop('readonly', false);
+			box.val('');
+		}
 	});
 });
+function doSearch(btn, country) {
+	btn.attr('disabled', true);
+	btn.attr('value', 'Searching...');
+	\$.ajax({
+		url: '/sage/sdjson/ajax.groovy',
+		context: btn,
+		data: {'z': \$('#srchInput').val(), 'c': 'search', 'i': country},
+		success: function() {
+			\$('#srchResults').html(arguments[0]);
+			\$('#addFrm').css('visibility', 'visible');
+		
+		},
+		error: function() {
+			alert('Search failed!  Please try again.');
+		},
+		complete: function() {
+			btn.attr('disabled', false);
+			btn.attr('value', 'Search');
+		}
+	});
+}
 -->
 </script>

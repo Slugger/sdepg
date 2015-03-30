@@ -137,10 +137,10 @@ final class Plugin extends AbstractPlugin {
 		if(chans.size() > 0) {
 			for(def i = 0; i < chans.size(); ++i) {
 				def nums = ChannelAPI.GetChannelNumbersForLineup(chans[i], lineupName)
-				if(nums.size() == 1) {
-					def vis = ChannelAPI.IsChannelViewableOnNumberOnLineup(chans[i], nums[0], lineupName)
-					ChannelAPI.SetChannelViewabilityForChannelNumberOnLineup(chans[i], nums[0], lineupName, !vis)
-					ChannelAPI.SetChannelViewabilityForChannelNumberOnLineup(chans[i], nums[0], lineupName, vis)
+				if(nums.size() == 1 && ChannelAPI.IsChannelViewableOnNumberOnLineup(chans[i], nums[0], lineupName)) {
+					ChannelAPI.SetChannelViewabilityForChannelNumberOnLineup(chans[i], nums[0], lineupName, false)
+					ChannelAPI.SetChannelViewabilityForChannelNumberOnLineup(chans[i], nums[0], lineupName, true)
+					LOG.info "EPG refresh started for $lineupName"
 					return true
 				}
 			}
@@ -184,9 +184,7 @@ final class Plugin extends AbstractPlugin {
 						if(LOG.isDebugEnabled())
 							LOG.debug "WATCHDOG -> SRV: $svrTime ~|~ LOCAL: $localTime"
 						if(svrTime != null && svrTime.time > localTime.time) {
-							def delay = rng.nextInt(20) + 1
-							LOG.info "EPG server reports new data is available; grabbing it now! [WAIT: $delay minutes]"
-							sleep 60000L * delay
+							LOG.info 'EPG server reports new data is available; grabbing it now!'
 							forceEpgRefresh(false)
 						}
 					} else if(LOG.isDebugEnabled())

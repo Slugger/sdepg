@@ -47,15 +47,11 @@ and restart SageTV.
         </Dependency>
         <Dependency>
         	<Plugin>sdjson-api</Plugin>
-        	<MinVersion>0.20140530.1.0</MinVersion>
+        	<MinVersion>0.20141201.0.0</MinVersion>
         </Dependency>
         <Dependency>
         	<Plugin>sagex-api</Plugin>
         	<MinVersion>7.1.9</MinVersion>
-        </Dependency>
-        <Dependency>
-        	<Plugin>jackson-datatype-json-org</Plugin>
-        	<MinVersion>2.5.1</MinVersion>
         </Dependency>
        <PluginType>Standard</PluginType>
        <Package>
@@ -74,9 +70,8 @@ and restart SageTV.
        	<ReleaseNotes><![CDATA[
 CHANGES SINCE LAST RELEASE
  
-* Upgrade to latest sdjson api and grabber
- 
-* Don't let the watchdog die when it throws an exception
+* Upgrade to latest sdjson api and grabber (API 20141201)
+* Fix bug where logos were always being removed after every epg update
  
 UPGRADE NOTES
  

@@ -170,7 +170,7 @@
   	<copy todir="${base}">
   	  <fileset dir=".">
   	  	<include name="*.log4j.properties" />
-  	  	<include name="tools/*.jar" />
+  	  	<include name="tools/grabber/**/*" />
   	  </fileset>
   	</copy>
   	<jar destfile="sdepg.jar" basedir="bld" />

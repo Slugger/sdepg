@@ -331,7 +331,7 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 	}
 	
 	protected String[] getBonusDetails(SageProgram sProg) {
-		def rating = sProg.qualityRatings.find { it.source == 'TMS' }
+		def rating = sProg.qualityRatings.find { it.source == 'Gracenote' }
 		if(rating)
 			return [rating.toString()] as String[]
 		return null

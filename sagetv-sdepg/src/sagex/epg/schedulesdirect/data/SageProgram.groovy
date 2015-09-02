@@ -22,9 +22,9 @@ import org.json.JSONObject
 import org.schedulesdirect.api.Program
 
 import sage.EPGDBPublic
+import sage.EPGDBPublic2
 import sagex.api.Configuration
 import sagex.epg.schedulesdirect.plugin.Plugin
-import sagex.epg.schedulesdirect.sagetv.helpers.IEPGDBPublicAdvanced
 
 /**
  * @author Derek Battams <derek@battams.ca>
@@ -141,12 +141,12 @@ public class SageProgram {
 			case 'guest_star': role = EPGDBPublic.GUEST_STAR_ROLE; break
 			case 'host': role = EPGDBPublic.HOST_ROLE; break
 			case 'judge': role = EPGDBPublic.JUDGE_ROLE; break
-			case 'contestant': role = IEPGDBPublicAdvanced.CONTESTANT_ROLE; break
-			case 'anchor': role = IEPGDBPublicAdvanced.ANCHOR_ROLE; break
-			case 'musical_guest': role = IEPGDBPublicAdvanced.MUSICAL_GUEST_ROLE; break
-			case 'correspondent': role = IEPGDBPublicAdvanced.CORRESPONDENT_ROLE; break
-			case 'team': role = IEPGDBPublicAdvanced.TEAM_ROLE; break
-			case 'voice': role = IEPGDBPublicAdvanced.VOICE_ROLE; break
+			case 'contestant': role = EPGDBPublic2.CONTESTANT_ROLE; break
+			case 'anchor': role = EPGDBPublic2.ANCHOR_ROLE; break
+			case 'musical_guest': role = EPGDBPublic2.MUSICAL_GUEST_ROLE; break
+			case 'correspondent': role = EPGDBPublic2.CORRESPONDENT_ROLE; break
+			case 'team': role = EPGDBPublic2.TEAM_ROLE; break
+			case 'voice': role = EPGDBPublic2.VOICE_ROLE; break
 			default:
 				role = EPGDBPublic.ACTOR_ROLE
 				name = "$name (${type.capitalize()})"

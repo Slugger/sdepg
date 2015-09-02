@@ -1,4 +1,4 @@
 sagetv-sdepg
 ============
 
-Schedules Direct EPG plugin for SageTV 7
+Schedules Direct EPG plugin for open source (OSS) SageTV.

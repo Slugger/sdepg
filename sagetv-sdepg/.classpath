@@ -15,6 +15,8 @@
 	<classpathentry kind="var" path="SAGELIB/commons-codec-1.3.jar"/>
 	<classpathentry kind="var" path="SAGELIB/json-20140107.jar"/>
 	<classpathentry kind="var" path="SAGELIB/commons-io-2.4.jar"/>
+	<classpathentry kind="var" path="SAGELIB"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/sdjson-api"/>
+	<classpathentry kind="var" path="SAGE_LUCENE"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

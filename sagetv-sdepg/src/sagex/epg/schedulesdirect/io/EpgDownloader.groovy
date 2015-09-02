@@ -30,7 +30,7 @@ class EpgDownloader {
 	static String generateUserAgent() {
 		def plugin = PluginAPI.GetInstalledPlugins().find { PluginAPI.GetPluginIdentifier(it) == 'sdepg' }
 		def ver = plugin ? PluginAPI.GetPluginVersion(plugin) : 'unknown'
-		return "sagetv-sdepg/$ver (${System.getProperty('os.name')} ${System.getProperty('os.arch')} ${System.getProperty('os.version')})"
+		return "sagetv-sdepg-oss/$ver (${System.getProperty('os.name')} ${System.getProperty('os.arch')} ${System.getProperty('os.version')})"
 	}
 	
 	private def id

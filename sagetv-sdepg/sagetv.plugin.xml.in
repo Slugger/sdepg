@@ -1,27 +1,19 @@
 <SageTVPlugin>
        <Name>Schedules Direct EPG Plugin</Name>
-       <Identifier>sdepg</Identifier>
+       <Identifier>sdepg-oss</Identifier>
        <Description>
 Native SageTV plugin for accessing EPG data via Schedules Direct.
   
 Please read the user guide for this plugin CAREFULLY prior to installation!
 There are special, additional steps required to install and uninstall this
-plugin.
-  
-If you are upgrading from version 0.0.5.x or older then you MUST follow
-the additional upgrade instructions outlined at http://bit.ly/1k5G6f9 otherwise
-your EPG data will slowly disappear.
- 
-If you are upgrading from 0.0.6.x to anything newer then you do not need
-to do anything special.  Just apply the updated plugin from the plugin manager
-and restart SageTV.
+plugin.  
        </Description>
        <Author>Slugger</Author>
-       <CreationDate>2012.10.08</CreationDate>
+       <CreationDate>2015.09.02</CreationDate>
        <ModificationDate>@@MOD_DATE@@</ModificationDate>
        <Version beta="true">@@VER_NUM@@.@@SAGE_BLD_NUM@@</Version>
-       <ResourcePath>plugins/sdepg</ResourcePath>
-       <Webpage>http://sourceforge.net/projects/sagetv-addons/</Webpage>
+       <ResourcePath>plugins/sdepg-oss</ResourcePath>
+       <Webpage>https://github.com/Slugger/sdepg/</Webpage>
        <Webpage>http://www.schedulesdirect.org/</Webpage>
        <ServerOnly>true</ServerOnly>
        <Dependency>
@@ -30,8 +22,7 @@ and restart SageTV.
        	</Dependency>
        <Dependency>
                 <Core/>
-                <MinVersion>7.1.9.1</MinVersion>
-                <MaxVersion>7.1.9.256</MaxVersion>
+                <MinVersion>9.0.0.0</MinVersion>
        </Dependency>
         <Dependency>
                 <Plugin>groovy</Plugin>
@@ -70,17 +61,6 @@ and restart SageTV.
        	<ReleaseNotes><![CDATA[
 CHANGES SINCE LAST RELEASE
  
-* Upgrade to latest sdjson api and grabber (API 20141201)
-* Fix bug where logos were always being removed after every epg update
- 
-UPGRADE NOTES
- 
-Users who are upgrading should modify their plugin settings as follows:
- 
-* Base sdjson URL: https://json.schedulesdirect.org
- 
-* Max Schedule Request for sdjson: 250 (was 1000)
- 
-* Max Program Request for sdjson: 5000 (was 50000)
+* Initial release for open source SageTV!
 		]]></ReleaseNotes>
 </SageTVPlugin>

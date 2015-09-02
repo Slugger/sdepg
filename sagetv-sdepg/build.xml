@@ -13,8 +13,9 @@
 <!--   See the License for the specific language governing permissions and			-->
 <!--   limitations under the License.												-->
 <project name="sdepg" default="build" basedir=".">
-  <property name="sage.jar" value="${user.home}/sagejar/Sage.jar" />
-  <property name="sage.libs" value="Z:/" />
+  <property name="sage.jar" value="/usr/local/lib/sagejar/Sage-oss.jar" />
+  <property name="sage.lucene" value="/usr/local/lib/sagejar/lucene-core-3.6.0.jar" />
+  <property name="sage.libs" value="/usr/local/lib/sagetv/" />
   <property name="src.token" value="@@" />
   <property name="app.res.dir" value="plugins/sdepg" />
   <property name="src" value="src" />
@@ -22,6 +23,7 @@
 	
   <path id="project.class.path">
   	<pathelement location="${sage.jar}" />
+  	<pathelement location="${sage.lucene}" />
   	<fileset dir="${sage.libs}" includes="*.jar" />
   </path>
 

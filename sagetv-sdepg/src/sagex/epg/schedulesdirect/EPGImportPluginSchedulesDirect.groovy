@@ -1,5 +1,5 @@
 /*
-*      Copyright 2012-2014 Battams, Derek
+*      Copyright 2012-2015 Battams, Derek
 *
 *       Licensed under the Apache License, Version 2.0 (the "License");
 *       you may not use this file except in compliance with the License.
@@ -15,38 +15,31 @@
 */
 package sagex.epg.schedulesdirect
 
+import java.io.File
+import java.util.Map
+import java.util.Set
+
 import org.apache.log4j.Logger
-import org.schedulesdirect.api.Airing
-import org.schedulesdirect.api.Config
-import org.schedulesdirect.api.EpgClient
-import org.schedulesdirect.api.Lineup
-import org.schedulesdirect.api.NetworkEpgClient
-import org.schedulesdirect.api.Program
-import org.schedulesdirect.api.Station
-import org.schedulesdirect.api.ZipEpgClient
+import org.schedulesdirect.api.*
+
+import com.google.code.sagetvaddons.license.LicenseResponse
 
 import sage.EPGDBPublic
+import sage.EPGDBPublic2
 import sage.EPGImportPlugin
-import sagex.api.ChannelAPI
-import sagex.api.Configuration
-import sagex.api.Global
-import sagex.epg.schedulesdirect.data.Channel
-import sagex.epg.schedulesdirect.data.LineupMap
+import sagex.api.*
+import com.google.code.sagetvaddons.license.License
 import sagex.epg.schedulesdirect.data.SageProgram
-import sagex.epg.schedulesdirect.io.EpgDownloader
 import sagex.epg.schedulesdirect.io.filters.AiringFilter
 import sagex.epg.schedulesdirect.io.filters.ProgramFilter
 import sagex.epg.schedulesdirect.io.generators.AiringGenerator
 import sagex.epg.schedulesdirect.io.generators.ChannelGenerator
 import sagex.epg.schedulesdirect.io.generators.ProgramGenerator
-import sagex.epg.schedulesdirect.io.lineups.LineupEditor
 import sagex.epg.schedulesdirect.plugin.Plugin
-import sagex.epg.schedulesdirect.sagetv.helpers.EPGDBPublicAdvancedImpl
-import sagex.epg.schedulesdirect.sagetv.helpers.IEPGDBPublicAdvanced
 import sagex.epg.schedulesdirect.tasks.SeriesInfoLoader
-
-import com.google.code.sagetvaddons.license.License
-import com.google.code.sagetvaddons.license.LicenseResponse
+import sagex.epg.schedulesdirect.io.EpgDownloader
+import sagex.epg.schedulesdirect.io.lineups.LineupEditor
+import sagex.epg.schedulesdirect.data.*
 
 class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 	static { Class.forName('sagex.epg.schedulesdirect.plugin.Plugin') } // Init the logger only once
@@ -54,7 +47,7 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 	static final File EPG_SRC = new File(Plugin.RESOURCE_DIR, 'sdjson.epg')
 	static final File LOGOS_ROOT = new File('ChannelLogos')
 	
-	private IEPGDBPublicAdvanced db
+	private EPGDBPublic2 db
 	private Map processedPrograms
 	private def uniqueShows
 	private def skippedShows
@@ -177,6 +170,10 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 		return "$lineup.name $lineup.location ($lineup.transport)"
 	}
 	
+	/*
+	 *  Even though the super interface specifies EPGDBPublic, the argument coming
+	 *  in is an EPGDBPublic2; the cast will succeed
+	 */
 	@Override
 	public boolean updateGuide(String providerId, EPGDBPublic db) {
 		LOG.debug "updateGuide() called for '$providerId'"
@@ -205,7 +202,7 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 		skippedShows = 0
 		reloadedShows = 0
 		processedPrograms.clear()
-		this.db = db ? new EPGDBPublicAdvancedImpl((sage.z)db) : null
+		this.db = db // this cast to EPGDBPublic2 will succeed in 9.0+
 		processProgramGenerators()
 		doUpdate()
 		airingFilter.resetLogger()
@@ -253,10 +250,10 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 			if(licResp.isLicensed()) {
 				programGenerator.generate().each {
 					if(db && !db.addShowPublic2(it.title, it.episodeTitle, it.description, 0L,
-			it.categories, it?.credits?.names as String[], it?.credits?.roles as byte[], it.rating,
-			it.advisories, it.year > 0 ? it.year.toString() : null, null, null, it.id, null,
-			it.originalAirDate ? it.originalAirDate.time : 0L, it.seasonNumber, it.episodeNumber,
-			it.forceUnique))
+							it.categories, it?.credits?.names as String[], it?.credits?.roles as byte[], it.rating,
+							it.advisories, it.year > 0 ? it.year.toString() : null, null, null, it.id, null,
+							it.originalAirDate ? it.originalAirDate.time : 0L, it.seasonNumber, it.episodeNumber,
+							it.forceUnique))
 						LOG.error "Failed to insert show details for '$it.externalId'"
 				}
 			} else
@@ -302,11 +299,11 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 		}
 		
 		if(db && !db.addShowPublic2(sProg.title, sProg.episodeTitle, sProg.description, 0L,
-			sProg.genres, sProg.sageCredits.getNames() as String[],
-			sProg.sageCredits.getRoles() as byte[], getContentRating(sProg), sProg.advisories,
-			sProg.year > 0 ? sProg.year.toString() : null, null, getBonusDetails(sProg), sProg.id, getLanguage(sProg),
-			sProg.originalAirDate ? sProg.originalAirDate.getTime() : 0L, sProg.seasonNum as short,
-			sProg.episodeNum as short, sProg.forceUnique)) {
+				sProg.genres, sProg.sageCredits.getNames() as String[],
+				sProg.sageCredits.getRoles() as byte[], getContentRating(sProg), sProg.advisories,
+				sProg.year > 0 ? sProg.year.toString() : null, null, getBonusDetails(sProg), sProg.id, getLanguage(sProg),
+				sProg.originalAirDate ? sProg.originalAirDate.getTime() : 0L, sProg.seasonNum as short,
+				sProg.episodeNum as short, sProg.forceUnique)) {
 			LOG.error "Failed to add show to database for '$show.externalId'"
 			return null
 		}
@@ -436,39 +433,39 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 	private int getMiscInt(def air) {
 		int i = 0
 		if(air.closedCaptioned)
-			i |= IEPGDBPublicAdvanced.CC_MASK
+			i |= EPGDBPublic2.CC_MASK
 		if(air.stereo)
-			i |= IEPGDBPublicAdvanced.STEREO_MASK
+			i |= EPGDBPublic2.STEREO_MASK
 		if(air.hdtv)
-			i |= IEPGDBPublicAdvanced.HDTV_MASK
+			i |= EPGDBPublic2.HDTV_MASK
 		if(air.premiereStatus != null && air.premiereStatus != Airing.PremiereStatus.NONE) {
 			switch(air.premiereStatus) {
-				case Airing.PremiereStatus.SERIES_PREMIERE: i |= IEPGDBPublicAdvanced.SERIES_PREMIERE_MASK; break
-				case Airing.PremiereStatus.SEASON_PREMIERE: i |= IEPGDBPublicAdvanced.SEASON_PREMIERE_MASK; break
-				default: i |= IEPGDBPublicAdvanced.PREMIERE_MASK
+				case Airing.PremiereStatus.SERIES_PREMIERE: i |= EPGDBPublic2.SERIES_PREMIERE_MASK; break
+				case Airing.PremiereStatus.SEASON_PREMIERE: i |= EPGDBPublic2.SEASON_PREMIERE_MASK; break
+				default: i |= EPGDBPublic2.PREMIERE_MASK
 			}
 		}
 		switch(air.finaleStatus) {
-			case Airing.FinaleStatus.SERIES_FINALE: i |= IEPGDBPublicAdvanced.SERIES_FINALE_MASK; break
-			case Airing.FinaleStatus.SEASON_FINALE: i |= IEPGDBPublicAdvanced.SEASON_FINALE_MASK; break
+			case Airing.FinaleStatus.SERIES_FINALE: i |= EPGDBPublic2.SERIES_FINALE_MASK; break
+			case Airing.FinaleStatus.SEASON_FINALE: i |= EPGDBPublic2.SEASON_FINALE_MASK; break
 		}
 		switch(air.liveStatus) {
-			case Airing.LiveStatus.LIVE: i |= IEPGDBPublicAdvanced.LIVE_MASK; break
-			case Airing.LiveStatus.TAPE: i |= IEPGDBPublicAdvanced.TAPE_MASK; break
+			case Airing.LiveStatus.LIVE: i |= EPGDBPublic2.LIVE_MASK; break
+			case Airing.LiveStatus.TAPE: i |= EPGDBPublic2.TAPE_MASK; break
 		}
 		if(air.subtitled)
-			i |= IEPGDBPublicAdvanced.SUBTITLE_MASK
+			i |= EPGDBPublic2.SUBTITLE_MASK
 		if(air.sap)
-			i |= IEPGDBPublicAdvanced.SAP_MASK
+			i |= EPGDBPublic2.SAP_MASK
 		switch(air.dolbyStatus) {
-			case Airing.DolbyStatus.DD51: i |= IEPGDBPublicAdvanced.DD51_MASK; break
+			case Airing.DolbyStatus.DD51: i |= EPGDBPublic2.DD51_MASK; break
 			case Airing.DolbyStatus.DD:
-			case Airing.DolbyStatus.DOLBY: i |= IEPGDBPublicAdvanced.DOLBY_MASK; break
+			case Airing.DolbyStatus.DOLBY: i |= EPGDBPublic2.DOLBY_MASK; break
 		}
 		if(air.letterboxed)
-			i |= IEPGDBPublicAdvanced.LETTERBOX_MASK
+			i |= EPGDBPublic2.LETTERBOX_MASK
 		if(air.newAiring)
-			i |= IEPGDBPublicAdvanced.NEW_MASK
+			i |= EPGDBPublic2.NEW_MASK
 		return i
 	}
 	
@@ -531,7 +528,7 @@ class EPGImportPluginSchedulesDirect implements EPGImportPlugin {
 			LOG.debug "Processing physical mapping for lineup $providerId:$lineupType"
 			map = lineup.physicalStationMap
 		} catch(Exception e) {
-			LOG.error 'sd4j error!', e
+			LOG.error 'sdjson error!', e
 		} finally {
 			if(clnt) try { clnt.close() } catch(IOException e) {}
 		}

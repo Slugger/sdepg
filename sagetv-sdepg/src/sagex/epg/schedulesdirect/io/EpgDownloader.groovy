@@ -28,7 +28,7 @@ import sagex.epg.schedulesdirect.plugin.Plugin
 class EpgDownloader {
 	static private final Logger LOG = Logger.getLogger(EpgDownloader)
 	static String generateUserAgent() {
-		def plugin = PluginAPI.GetInstalledPlugins().find { PluginAPI.GetPluginIdentifier(it) == 'sdepg' }
+		def plugin = PluginAPI.GetInstalledPlugins().find { PluginAPI.GetPluginIdentifier(it) == 'sdepg-oss' }
 		def ver = plugin ? PluginAPI.GetPluginVersion(plugin) : 'unknown'
 		return "sagetv-sdepg-oss/$ver (${System.getProperty('os.name')} ${System.getProperty('os.arch')} ${System.getProperty('os.version')})"
 	}
@@ -76,7 +76,7 @@ class EpgDownloader {
 		if(!targetDir.exists())
 			targetDir.mkdirs()
 		def targetFile = EPGImportPluginSchedulesDirect.EPG_SRC
-		def plugin = PluginAPI.GetInstalledPlugins().find { PluginAPI.GetPluginIdentifier(it) == 'sdepg' }
+		def plugin = PluginAPI.GetInstalledPlugins().find { PluginAPI.GetPluginIdentifier(it) == 'sdepg-oss' }
 		if(PluginAPI.GetPluginConfigValue(plugin, Plugin.PROP_SKIP_GRAB).toBoolean()) {
 			LOG.warn 'Skipping grabber execution; user disabled!'
 			return

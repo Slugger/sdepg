@@ -1,5 +1,5 @@
 <SageTVPlugin>
-       <Name>Schedules Direct EPG Plugin</Name>
+       <Name>Schedules Direct EPG Plugin (OSS)</Name>
        <Identifier>sdepg-oss</Identifier>
        <Description>
 Native SageTV plugin for accessing EPG data via Schedules Direct.
@@ -12,7 +12,7 @@ plugin.
        <CreationDate>2015.09.02</CreationDate>
        <ModificationDate>@@MOD_DATE@@</ModificationDate>
        <Version beta="true">@@VER_NUM@@.@@SAGE_BLD_NUM@@</Version>
-       <ResourcePath>plugins/sdepg-oss</ResourcePath>
+       <ResourcePath>plugins/sdepg</ResourcePath>
        <Webpage>https://github.com/Slugger/sdepg/</Webpage>
        <Webpage>http://www.schedulesdirect.org/</Webpage>
        <ServerOnly>true</ServerOnly>

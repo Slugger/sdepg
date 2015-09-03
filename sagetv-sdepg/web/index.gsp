@@ -2,7 +2,7 @@
 <div id="airdetailedinfo">
 <%
 /*
- *      Copyright 2013-2014 Battams, Derek
+ *      Copyright 2013-2015 Battams, Derek
  *       
  *       Licensed under the Apache License, Version 2.0 (the "License");
  *       you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@
 	import sagex.epg.schedulesdirect.io.EpgDownloader
 	import sagex.epg.schedulesdirect.plugin.Plugin
 	
-	final PLUGIN = PluginAPI.GetInstalledPlugins().find { PluginAPI.GetPluginIdentifier(it) == 'sdepg' }
+	final PLUGIN = PluginAPI.GetInstalledPlugins().find { PluginAPI.GetPluginIdentifier(it) == 'sdepg-oss' }
 	request.setAttribute('plugin', PLUGIN)
 	try {
 		request.setAttribute('clnt', new NetworkEpgClient(PluginAPI.GetPluginConfigValue(PLUGIN, 'sdepg/sdUser'), PluginAPI.GetPluginConfigValue(PLUGIN, 'sdepg/sdPassword'), EpgDownloader.generateUserAgent(), PluginAPI.GetPluginConfigValue(PLUGIN, 'sdepg/sdjsonUrl'), false))	
